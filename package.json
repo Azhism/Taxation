@@ -1,0 +1,16 @@
+{
+  "name": "ai-tax-filing-pakistan",
+  "version": "1.0.0",
+  "description": "AI-powered tax filing platform for Pakistan",
+  "private": true,
+  "scripts": {
+    "setup": "cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build"
+  },
+  "keywords": ["tax", "pakistan", "ai", "fbr", "iris"],
+  "author": "",
+  "license": "ISC"
+}
