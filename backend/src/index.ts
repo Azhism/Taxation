@@ -11,11 +11,20 @@ import { query } from "./db";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
+app.use(cors({ origin: FRONTEND_ORIGIN }));
 app.use(express.json());
 
-// JWT secret
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
+// JWT secret — required, no insecure fallback
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`FATAL: ${name} is not set. Add it to backend/.env before starting.`);
+    process.exit(1);
+  }
+  return value;
+}
+const JWT_SECRET = requiredEnv("JWT_SECRET");
 
 // --- Auth routes ---
 app.post("/api/auth/signup", async (req, res) => {
@@ -180,8 +189,30 @@ app.get("/api/docs", authMiddleware, async (req: any, res) => {
   }
 });
 
-// Static serving for uploaded files (dev only)
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+// Authenticated file download — only the document's owner can fetch it
+app.get("/api/docs/:id/file", authMiddleware, async (req: any, res) => {
+  try {
+    const docId = parseInt(req.params.id, 10);
+    if (Number.isNaN(docId)) {
+      return res.status(400).json({ error: "bad id" });
+    }
+    const result = await query(
+      "SELECT filename FROM documents WHERE id = $1 AND user_id = $2",
+      [docId, req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "not found" });
+    }
+    const filePath = path.join(UPLOAD_DIR, result.rows[0].filename);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "file missing" });
+    }
+    return res.sendFile(filePath);
+  } catch (error) {
+    console.error("File download error:", error);
+    return res.status(500).json({ error: "failed to fetch file" });
+  }
+});
 
 // Health check
 app.get("/api/health", (req, res) => {
