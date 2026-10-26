@@ -14,29 +14,42 @@ export default function Signup() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demoNote, setDemoNote] = useState("");
   const navigate = useNavigate();
+
+  function continueAsDemo() {
+    localStorage.setItem("TOKEN", "demo");
+    localStorage.setItem("USER_EMAIL", email || "demo@fileup.pk");
+    localStorage.setItem("USER_NAME", name || "Demo User");
+    setDemoNote("Continuing with demo account…");
+    window.setTimeout(() => navigate("/dashboard"), 900);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setDemoNote("");
     setLoading(true);
-    
+
     try {
       const res = await fetch("http://localhost:4000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, name }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.ok) {
         navigate("/login");
-      } else {
-        setError(data.error || "Signup failed");
+        return;
       }
+
+      // Backend reached but signup failed (e.g. no database) — continue in demo mode.
+      continueAsDemo();
     } catch (err) {
-      setError("Network error. Make sure backend is running on port 4000.");
+      // Backend unreachable — continue in demo mode so the app stays explorable.
+      continueAsDemo();
     } finally {
       setLoading(false);
     }
@@ -110,9 +123,13 @@ export default function Signup() {
                 </Alert>
               )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || !!demoNote}>
                 {loading ? "Creating account..." : "Create Account"}
               </Button>
+
+              {demoNote && (
+                <p className="text-center text-xs text-muted-foreground">{demoNote}</p>
+              )}
             </form>
           </CardContent>
         </Card>

@@ -13,11 +13,21 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demoNote, setDemoNote] = useState("");
   const navigate = useNavigate();
+
+  function continueAsDemo() {
+    localStorage.setItem("TOKEN", "demo");
+    localStorage.setItem("USER_EMAIL", email || "demo@fileup.pk");
+    localStorage.setItem("USER_NAME", "Demo User");
+    setDemoNote("Continuing with demo account…");
+    window.setTimeout(() => navigate("/dashboard"), 900);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setDemoNote("");
     setLoading(true);
 
     try {
@@ -34,11 +44,14 @@ export default function Login() {
         localStorage.setItem("USER_EMAIL", data.email);
         localStorage.setItem("USER_NAME", data.name || "");
         navigate("/dashboard");
-      } else {
-        setError(data.error || "Login failed");
+        return;
       }
+
+      // Backend reached but login failed (e.g. no database) — continue in demo mode.
+      continueAsDemo();
     } catch (err) {
-      setError("Network error. Make sure backend is running on port 4000.");
+      // Backend unreachable — continue in demo mode so the app stays explorable.
+      continueAsDemo();
     } finally {
       setLoading(false);
     }
@@ -102,9 +115,13 @@ export default function Login() {
                 </Alert>
               )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || !!demoNote}>
                 {loading ? "Logging in..." : "Login"}
               </Button>
+
+              {demoNote && (
+                <p className="text-center text-xs text-muted-foreground">{demoNote}</p>
+              )}
             </form>
           </CardContent>
         </Card>

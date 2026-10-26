@@ -1,183 +1,301 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, UploadCloud, MessageCircle, CheckCircle2, FileText, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { TrustSection } from "@/components/TrustSection";
+
+import "./Landing.css";
+
+/* --- Animated "Your tax overview" card ---------------------------------- */
+
+type CardState = {
+  step: 1 | 2 | 3;
+  salaryIn: boolean;
+  salaryDone: boolean;
+  bankIn: boolean;
+  bankDone: boolean;
+  barFill: number; // 0–100, drives the scan progress bar width
+  insightIn: boolean;
+  refund: number;
+  cardIn: boolean;
+};
+
+const FINAL: CardState = {
+  step: 3,
+  salaryIn: true,
+  salaryDone: true,
+  bankIn: true,
+  bankDone: true,
+  barFill: 100,
+  insightIn: true,
+  refund: 18400,
+  cardIn: true,
+};
+
+const RESET: CardState = {
+  step: 1,
+  salaryIn: false,
+  salaryDone: false,
+  bankIn: false,
+  bankDone: false,
+  barFill: 0,
+  insightIn: false,
+  refund: 0,
+  cardIn: true,
+};
+
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const hidden = (shown: boolean) => ({
+  opacity: shown ? 1 : 0,
+  transform: shown ? "translateY(0)" : "translateY(10px)",
+});
+
+const OverviewCard = () => {
+  // Initial render is the final state, so the card never looks broken
+  // (no-JS / reduced-motion fallback). When motion is allowed, the effect
+  // rewinds to RESET and runs the loop.
+  const [reduced] = useState(prefersReducedMotion);
+  const [s, setS] = useState<CardState>(() => (prefersReducedMotion() ? FINAL : RESET));
+
+  useEffect(() => {
+    if (reduced) return;
+
+    let timers: number[] = [];
+    let rafs: number[] = [];
+    const addT = (fn: () => void, ms: number) => timers.push(window.setTimeout(fn, ms));
+
+    // Drive a 0→1 value over `dur` ms via rAF (avoids CSS transition-trigger gotchas).
+    const animate = (dur: number, ease: (t: number) => number, cb: (v: number) => void) => {
+      const start = performance.now();
+      const tick = (now: number) => {
+        const t = Math.min((now - start) / dur, 1);
+        cb(ease(t));
+        if (t < 1) rafs.push(requestAnimationFrame(tick));
+      };
+      rafs.push(requestAnimationFrame(tick));
+    };
+    const linear = (t: number) => t;
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    const runCycle = () => {
+      // Previous cycle's timers/rAFs have all fired by now; drop the stale ids.
+      timers.length = 0;
+      rafs.length = 0;
+
+      setS(RESET);
+      addT(() => setS((p) => ({ ...p, salaryIn: true })), 400);
+      addT(() => setS((p) => ({ ...p, salaryDone: true, step: 2 })), 1500);
+      addT(() => {
+        setS((p) => ({ ...p, bankIn: true }));
+        animate(2400, linear, (v) => setS((p) => ({ ...p, barFill: v * 100 })));
+      }, 1900);
+      addT(() => setS((p) => ({ ...p, bankDone: true, step: 3 })), 4400);
+      addT(() => {
+        setS((p) => ({ ...p, insightIn: true }));
+        animate(1300, easeOut, (v) => setS((p) => ({ ...p, refund: Math.round(v * 18400) })));
+      }, 4800);
+      addT(() => setS((p) => ({ ...p, cardIn: false })), 10200);
+      addT(runCycle, 10900);
+    };
+
+    runCycle();
+
+    return () => {
+      timers.forEach(clearTimeout);
+      rafs.forEach(cancelAnimationFrame);
+    };
+  }, [reduced]);
+
+  return (
+    <div className="overview" id="overview" aria-hidden="true" style={{ opacity: s.cardIn ? 1 : 0 }}>
+      <div className="overview__head">
+        <div>
+          <p className="overview__label">Your tax overview</p>
+          <p className="overview__year">Tax year 2025-26</p>
+        </div>
+        <span className="badge">
+          <i className="ti ti-sparkles" aria-hidden="true"></i>
+          AI-assisted
+        </span>
+      </div>
+
+      <div className="progress">
+        <span className={`progress__seg${s.step >= 1 ? " is-on" : ""}`} id="sb1"></span>
+        <span className={`progress__seg${s.step >= 2 ? " is-on" : ""}`} id="sb2"></span>
+        <span className={`progress__seg${s.step >= 3 ? " is-on" : ""}`} id="sb3"></span>
+        <span className="progress__label" id="stepLbl">
+          Step {s.step} of 3
+        </span>
+      </div>
+
+      <div className="file" id="r1" style={hidden(s.salaryIn)}>
+        <i className="ti ti-file-type-pdf file__icon"></i>
+        <span className="file__name">Salary slip.pdf</span>
+        <span className="file__status">
+          {s.salaryDone ? (
+            <>
+              <i className="ti ti-circle-check" id="i1"></i>
+              <span id="t1">Extracted</span>
+            </>
+          ) : (
+            <>
+              <i className="ti ti-loader-2 spin" id="i1"></i>
+              <span id="t1">Uploading...</span>
+            </>
+          )}
+        </span>
+      </div>
+
+      <div className="file file--scan" id="r2" style={hidden(s.bankIn)}>
+        <div className="file__row">
+          <i className="ti ti-photo file__icon"></i>
+          <span className="file__name">Bank statement.jpg</span>
+          <span className="file__status">
+            {s.bankDone ? (
+              <>
+                <i className="ti ti-circle-check" id="i2"></i>
+                <span id="t2">Extracted</span>
+              </>
+            ) : (
+              <>
+                <i className="ti ti-loader-2 spin" id="i2"></i>
+                <span id="t2">Scanning...</span>
+              </>
+            )}
+          </span>
+        </div>
+        <div className="scanbar">
+          <span id="bar" style={{ width: `${s.barFill}%` }}></span>
+        </div>
+      </div>
+
+      <div className="insight" id="ins" style={hidden(s.insightIn)}>
+        <p className="insight__label">AI found 2 possible credits</p>
+        <p className="insight__amount">
+          <strong id="amt">PKR {s.refund.toLocaleString("en-US")}</strong>
+          <span>estimated refund</span>
+        </p>
+        <ul className="chips">
+          <li>Employer contributions</li>
+          <li>Donations</li>
+        </ul>
+        <p className="insight__note">Estimate only</p>
+      </div>
+
+      <div className="overview__foot">
+        <span>
+          <i className="ti ti-lock" aria-hidden="true"></i>Encrypted
+        </span>
+        <span>FBR-ready output</span>
+      </div>
+    </div>
+  );
+};
+
+/* --- Landing page ------------------------------------------------------- */
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteHeader />
+    <div className="fileup-landing">
+      <header className="nav">
+        <div className="container nav__inner">
+          <Link className="brand" to="/" aria-label="FileUp home">
+            <span className="brand__mark">
+              <i className="ti ti-shield-check" aria-hidden="true"></i>
+            </span>
+            <span className="brand__text">
+              <span className="brand__name">FileUp</span>
+              <span className="brand__tag">Pakistan tax filing assistant</span>
+            </span>
+          </Link>
 
-      <main className="container space-y-16 pb-16 pt-8 md:pt-16">
-        {/* Hero */}
-        <section
-          id="hero"
-          className="section-padding relative grid gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:items-center"
-        >
-          <div className="absolute -right-20 top-[-6rem] hidden h-72 w-72 rounded-full bg-[radial-gradient(circle_at_center,_hsl(var(--primary))_0,_transparent_60%)] opacity-60 blur-3xl md:block" />
+          <nav className="nav__links" aria-label="Main">
+            <a href="#how">How it works</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#trust">Trust</a>
+            <button className="lang" type="button" aria-label="Switch language">
+              EN | اردو
+            </button>
+          </nav>
+        </div>
+      </header>
 
-          <div className="relative z-10 space-y-6 animate-enter">
-            <Badge variant="secondary" className="mb-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs">
-              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-              <span>Built for Pakistan&apos;s salaried individuals</span>
-            </Badge>
+      <main>
+        <section className="hero container">
+          <div className="hero__copy">
+            <p className="pill">
+              <i className="ti ti-shield-check" aria-hidden="true"></i>
+              Built for Pakistan&apos;s salaried individuals
+            </p>
+            <h1>Your FBR tax return, done in minutes</h1>
+            <p className="lede">
+              Upload your salary slip, confirm a few details, and get a return ready to review before you file. No
+              accountant needed.
+            </p>
 
-            <header className="space-y-4">
-              <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
-                File Your Taxes in Minutes — Powered by AI
-              </h1>
-              <p className="max-w-xl text-balance text-muted-foreground">
-                AI Tax Filing simplifies Pakistan FBR tax filing for salaried individuals. Answer a few questions,
-                upload your documents, and let our assistant handle the forms.
-              </p>
-            </header>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Button size="lg" className="hover-scale" asChild>
-                <Link to="/signup">Get Started</Link>
-              </Button>
-              <Button variant="outline" size="lg" className="hover-scale" asChild>
-                <Link to="/login">Login</Link>
-              </Button>
-              <p className="ml-1 text-xs text-muted-foreground md:text-sm">
-                No spreadsheets. No guesswork. Just simple, guided filing.
-              </p>
+            <div className="cta-stack">
+              <Link className="btn btn--primary" to="/signup">
+                Get started
+                <i className="ti ti-arrow-right" aria-hidden="true"></i>
+              </Link>
+              <Link className="btn btn--secondary" to="/login">
+                Login
+              </Link>
             </div>
 
-            <dl className="grid gap-4 text-sm text-muted-foreground sm:grid-cols-3">
-              <div>
-                <dt className="flex items-center gap-2 font-medium text-foreground">
-                  <ShieldCheck className="h-4 w-4 text-primary" /> 100% secure
-                </dt>
-                <dd className="mt-1 text-xs md:text-sm">Bank-level encryption for your CNIC and salary details.</dd>
-              </div>
-              <div>
-                <dt className="flex items-center gap-2 font-medium text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary" /> Automated form-filling
-                </dt>
-                <dd className="mt-1 text-xs md:text-sm">We map your data directly into FBR forms for you.</dd>
-              </div>
-              <div>
-                <dt className="flex items-center gap-2 font-medium text-foreground">
-                  <UploadCloud className="h-4 w-4 text-primary" /> Easy document upload
-                </dt>
-                <dd className="mt-1 text-xs md:text-sm">Supports salary slips, bank statements, and more.</dd>
-              </div>
-            </dl>
+            <p className="fineprint">Free to start &middot; About 15 minutes &middot; Delete your data anytime</p>
           </div>
 
-          {/* Hero illustration */}
-          <aside className="relative z-10 animate-enter md:justify-self-end">
-            <div className="glass-panel hover-scale max-w-md rounded-3xl p-6 shadow-xl">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Your tax overview</p>
-                  <p className="text-sm font-semibold">Tax year 2024</p>
-                </div>
-                <Badge variant="secondary" className="px-2 py-1 text-[0.65rem]">
-                  AI-assisted
-                </Badge>
-              </div>
+          <OverviewCard />
 
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between rounded-xl bg-secondary px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <UploadCloud className="h-4 w-4 text-primary" />
-                    <span>Salary slip.pdf</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Uploaded</span>
-                </div>
-                <div className="flex items-center justify-between rounded-xl bg-secondary px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span>Bank statement.jpg</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Scanning…</span>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-accent/20 p-4">
-                <p className="mb-1 text-xs font-medium text-muted-foreground">AI insight</p>
-                <p className="text-sm">
-                  "We&apos;ve identified eligible tax credits from your employer contributions and donations. Estimated
-                  refund: <span className="font-semibold text-primary">PKR 18,400</span>."
-                </p>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between border-t border-dashed border-border pt-3 text-xs">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Lock className="h-3.5 w-3.5 text-primary" />
-                  <span>End-to-end encrypted</span>
-                </div>
-                <span className="text-muted-foreground">FBR-ready output</span>
-              </div>
-            </div>
-          </aside>
+          <p className="sr-only">
+            Illustration of the FileUp dashboard: a salary slip and a bank statement are processed, then the app shows
+            an estimated refund of PKR 18,400 that you confirm before filing.
+          </p>
         </section>
 
-        {/* How it works */}
-        <section id="how-it-works" className="section-padding border-t border-border/60">
-          <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold md:text-3xl">A guided, step-by-step filing journey</h2>
-              <p className="mt-2 max-w-2xl text-muted-foreground">
-                From CNIC to wealth statement, AI Tax Filing keeps everything in plain language and takes
-                you from start to submitted in simple steps.
-              </p>
-            </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/signup">Start filing</Link>
-            </Button>
-          </header>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="glass-panel">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                    1
-                  </span>
-                  Create Account
-                </CardTitle>
-                <CardDescription>Sign up with your email and secure your account in seconds.</CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-panel">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                    2
-                  </span>
-                  Upload documents
-                </CardTitle>
-                <CardDescription>
-                  Securely upload salary slips and bank statements as PDF or images from your device.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-panel">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                    3
-                  </span>
-                  AI prepares forms
-                </CardTitle>
-                <CardDescription>
-                  Our AI extracts figures, applies Pakistan tax rules, and pre-fills FBR forms for review.
-                </CardDescription>
-              </CardHeader>
-            </Card>
+        <section className="how container" id="how" aria-label="How it works">
+          <h2 className="how__title">How it works</h2>
+          <div className="steps">
+          <article className="step" tabIndex={0}>
+            <span className="step__icon">
+              <i className="ti ti-upload" aria-hidden="true"></i>
+            </span>
+            <h2>1. Upload</h2>
+            <p>Salary slip and bank statement, photo or PDF.</p>
+          </article>
+          <article className="step" tabIndex={0}>
+            <span className="step__icon">
+              <i className="ti ti-list-check" aria-hidden="true"></i>
+            </span>
+            <h2>2. Review</h2>
+            <p>Confirm what we found and answer a few questions.</p>
+          </article>
+          <article className="step" tabIndex={0}>
+            <span className="step__icon">
+              <i className="ti ti-send" aria-hidden="true"></i>
+            </span>
+            <h2>3. File</h2>
+            <p>Get an FBR-ready return to submit on IRIS.</p>
+          </article>
           </div>
         </section>
-
-        <TrustSection />
       </main>
+
+      <footer className="trust" id="trust">
+        <ul className="container trust__list">
+          <li>
+            <i className="ti ti-lock" aria-hidden="true"></i>Encrypted in transit and at rest
+          </li>
+          <li>
+            <i className="ti ti-trash" aria-hidden="true"></i>Delete your documents anytime
+          </li>
+          <li>
+            <i className="ti ti-info-circle" aria-hidden="true"></i>Not covered: business and rental income
+          </li>
+        </ul>
+      </footer>
     </div>
   );
 };
