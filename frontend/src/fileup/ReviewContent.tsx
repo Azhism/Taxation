@@ -33,7 +33,7 @@ export default function ReviewContent() {
       </div>
 
       <div className="page-actions">
-        <button className="btn btn--secondary" type="button" onClick={() => navigate("/dashboard/documents")}>
+        <button className="btn btn--secondary" type="button" onClick={() => navigate("/dashboard/return/documents")}>
           Back to documents
         </button>
         <button
@@ -41,7 +41,7 @@ export default function ReviewContent() {
           type="button"
           onClick={() => {
             reviewContinue();
-            navigate("/dashboard");
+            navigate("/dashboard/return");
           }}
         >
           Looks good, continue

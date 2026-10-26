@@ -1,0 +1,332 @@
+/* ==========================================================
+   Admin panel styles. Scoped under .fileup-admin, which sits on
+   the same element as .fileup-app, so it inherits the design
+   tokens and dark-theme overrides from app.css.
+   ========================================================== */
+
+.fileup-admin .app-main.app-main--wide { max-width: 760px; }
+
+.fileup-admin .admin-tag {
+  margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+  background: var(--accent-soft); color: #0b6f8a;
+  font-size: 11px; font-weight: 500;
+}
+.dark .fileup-admin .admin-tag { color: #7fd6ec; }
+
+.fileup-admin .avatar--muted { background: var(--badge); color: var(--muted); }
+
+/* ---------- Queue ---------- */
+
+.fileup-admin .adm-queue-head { margin-bottom: 10px; }
+.fileup-admin .adm-count { font-size: 13px; color: var(--muted); }
+
+.fileup-admin .adm-table {
+  display: flex; flex-direction: column;
+  border: 0.5px solid var(--line); border-radius: 16px;
+  background: var(--surface); overflow: hidden;
+}
+.fileup-admin .adm-row {
+  display: grid; grid-template-columns: 1fr 90px 150px 36px;
+  align-items: center; gap: 12px; padding: 12px 16px; font-size: 14px;
+}
+.fileup-admin .adm-row + .adm-row { border-top: 0.5px solid var(--line); }
+.fileup-admin .adm-row--head { font-size: 12px; font-weight: 500; color: var(--muted); background: var(--row); }
+.fileup-admin .adm-row--link { cursor: pointer; transition: background 0.15s; }
+.fileup-admin .adm-row--link:hover { background: var(--row); }
+.fileup-admin .adm-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.fileup-admin .adm-name { display: block; font-weight: 500; color: var(--ink); }
+.fileup-admin .adm-row--muted .adm-name { color: var(--muted); }
+.fileup-admin .adm-sub { display: block; font-size: 12px; color: var(--muted); }
+.fileup-admin .adm-go { justify-self: end; }
+.fileup-admin .adm-sample { font-size: 11px; color: var(--subtle); }
+
+/* ---------- Case detail ---------- */
+
+.fileup-admin .adm-head { margin-bottom: 0; }
+.fileup-admin .adm-head .stage__text { margin-bottom: 0; }
+
+.fileup-admin .adm-section__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.fileup-admin .adm-section__head .panel__title { margin-bottom: 0; }
+
+.fileup-admin .adm-empty { display: flex; align-items: flex-start; gap: 12px; }
+.fileup-admin .adm-empty__title { font-size: 14px; font-weight: 500; }
+.fileup-admin .adm-empty__text { margin-top: 2px; font-size: 13px; color: var(--muted); }
+
+.fileup-admin .adm-docs { display: flex; flex-direction: column; gap: 14px; }
+.fileup-admin .adm-doc { padding: 12px 14px; border: 0.5px solid var(--line); border-radius: 14px; background: var(--row); }
+.fileup-admin .adm-doc__head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+
+.fileup-admin .kv { margin: 0; }
+.fileup-admin .kv__row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 13px; border-top: 0.5px solid var(--line); }
+.fileup-admin .kv__row dt { margin: 0; color: var(--muted); }
+.fileup-admin .kv__row dd { margin: 0; font-weight: 500; text-align: right; display: inline-flex; align-items: center; gap: 6px; }
+.fileup-admin .kv__row--flag dd { color: var(--warn-ink); }
+.fileup-admin .adm-flag {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 1px 8px; border-radius: 999px;
+  background: var(--warn-chip); color: var(--warn-ink); font-size: 11px; font-weight: 500;
+}
+
+.fileup-admin .adm-cmp-top { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.fileup-admin .adm-cmp-stat { flex: 1; padding: 10px 14px; border-radius: 12px; background: var(--row); }
+.fileup-admin .adm-cmp-stat__label { display: block; font-size: 12px; color: var(--muted); }
+.fileup-admin .adm-cmp-stat__value { display: block; font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.fileup-admin .cmp { border: 0.5px solid var(--line); border-radius: 12px; overflow: hidden; }
+.fileup-admin .cmp__row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px; align-items: center; padding: 9px 14px; font-size: 13px; }
+.fileup-admin .cmp__row + .cmp__row { border-top: 0.5px solid var(--line); }
+.fileup-admin .cmp__row--head { font-size: 12px; font-weight: 500; color: var(--muted); background: var(--row); }
+.fileup-admin .cmp__row--flag { background: var(--warn-bg); }
+.fileup-admin .cmp__row > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.fileup-admin .cmp__row > span:not(:first-child) { color: var(--muted); font-variant-numeric: tabular-nums; }
+.fileup-admin .cmp__row--head > span:not(:first-child) { color: var(--muted); }
+.fileup-admin .adm-cmp-note { margin-top: 10px; }
+
+.fileup-admin .adm-final-input { display: flex; align-items: center; gap: 8px; }
+.fileup-admin .adm-final-input__prefix { font-size: 14px; color: var(--muted); }
+.fileup-admin .adm-final-input .input { max-width: 220px; font-variant-numeric: tabular-nums; }
+
+.fileup-admin .adm-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+
+.fileup-admin .adm-note-box {
+  display: flex; align-items: flex-start; gap: 12px; margin-top: 14px;
+  padding: 14px 16px; border: 0.5px solid var(--line); border-radius: 16px; background: var(--surface);
+}
+.fileup-admin .adm-note-box > .btn { margin-left: auto; align-self: center; }
+.fileup-admin .adm-note-box__title { font-size: 14px; font-weight: 500; }
+.fileup-admin .adm-note-box__text { margin-top: 2px; font-size: 13px; color: var(--muted); }
+.fileup-admin .adm-note-box--warn { border-color: var(--warn-line); background: var(--warn-bg); }
+.fileup-admin .adm-note-box--warn > i { color: var(--warn-ink); }
+.fileup-admin .adm-note-box--done { border-color: #bfe6d2; background: #e3f6ec; }
+.fileup-admin .adm-note-box--done > i,
+.fileup-admin .adm-note-box--done .adm-note-box__title { color: #17643d; }
+.dark .fileup-admin .adm-note-box--done { border-color: #1d5345; background: #103027; }
+.dark .fileup-admin .adm-note-box--done > i,
+.dark .fileup-admin .adm-note-box--done .adm-note-box__title { color: #7fe0a6; }
+
+.fileup-admin .adm-shot {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  padding: 12px 14px; border: 0.5px solid var(--line); border-radius: 12px; background: var(--row);
+}
+.fileup-admin .adm-shot > div { flex: 1; min-width: 0; }
+
+@media (max-width: 560px) {
+  .fileup-admin .adm-row { grid-template-columns: 1fr auto 28px; }
+  .fileup-admin .adm-row > :nth-child(2) { display: none; }
+  .fileup-admin .cmp__row { grid-template-columns: 1.4fr 1fr 1fr; font-size: 12px; padding: 8px 10px; }
+  .fileup-admin .adm-cmp-top { flex-wrap: wrap; }
+}
+
+/* ==========================================================
+   Launcher — four work-area tiles, then WhatsApp + Settings.
+   ========================================================== */
+
+.fileup-admin .adm-tiles {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px;
+}
+
+.fileup-admin .adm-tile {
+  display: flex; flex-direction: column; text-align: left; min-height: 132px;
+  padding: 18px 20px; border: 0.5px solid var(--line); border-radius: 18px;
+  background: var(--surface); cursor: pointer; color: var(--ink);
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+  animation: fu-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--d, 0s);
+}
+.fileup-admin .adm-tile:hover,
+.fileup-admin .adm-tile:focus-visible {
+  transform: translateY(-6px); border-color: var(--accent); box-shadow: var(--shadow-lift);
+}
+.fileup-admin .adm-tile__chip {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; margin-bottom: 14px;
+  background: var(--accent-wash); color: var(--accent); transition: background 0.18s, color 0.18s;
+}
+.fileup-admin .adm-tile:hover .adm-tile__chip,
+.fileup-admin .adm-tile:focus-visible .adm-tile__chip { background: var(--accent); color: #fff; }
+.fileup-admin .adm-tile__title { font-size: 15px; font-weight: 600; }
+.fileup-admin .adm-tile__foot { margin-top: auto; padding-top: 14px; }
+.fileup-admin .adm-tile__count { display: flex; align-items: baseline; gap: 6px; }
+.fileup-admin .adm-tile__num { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+.fileup-admin .adm-tile__unit { font-size: 13px; color: var(--muted); }
+.fileup-admin .adm-tile__detail { margin-top: 4px; font-size: 12px; color: var(--subtle); }
+.fileup-admin .adm-tile__detail--alert { color: var(--warn-ink); font-weight: 500; }
+
+.fileup-admin .adm-launch-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.fileup-admin .adm-mini {
+  display: inline-flex; align-items: center; gap: 10px; padding: 11px 16px;
+  border: 0.5px solid var(--line-strong); border-radius: 14px; background: var(--surface);
+  cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink);
+  transition: border-color 0.18s, transform 0.18s;
+}
+.fileup-admin .adm-mini:hover,
+.fileup-admin .adm-mini:focus-visible { border-color: var(--accent); transform: translateY(-2px); }
+.fileup-admin .adm-mini__icon {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px;
+  background: var(--accent-wash); color: var(--accent);
+}
+.fileup-admin .adm-mini__icon--wa { background: #e7f7f0; color: #1aa06a; }
+.fileup-admin .adm-mini__badge {
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+  background: var(--accent); color: #fff; font-size: 12px; font-weight: 600;
+  display: grid; place-items: center;
+}
+
+/* ==========================================================
+   Area list — one card per return, area-specific columns.
+   ========================================================== */
+
+.fileup-admin .adm-area-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fileup-admin .adm-area-head .page-title { margin-bottom: 0; }
+.fileup-admin .adm-area-count { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+.fileup-admin .adm-search { position: relative; margin-bottom: 14px; }
+.fileup-admin .adm-search > i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); }
+.fileup-admin .adm-search .input { width: 100%; padding-left: 38px; }
+
+.fileup-admin .adm-list { display: flex; flex-direction: column; gap: 12px; }
+.fileup-admin .adm-lrow {
+  display: flex; flex-direction: column; gap: 12px; width: 100%;
+  padding: 16px; border: 0.5px solid var(--line); border-radius: 16px; background: var(--surface);
+}
+.fileup-admin button.adm-lrow { text-align: left; color: var(--ink); font: inherit; }
+.fileup-admin .adm-lrow--link { cursor: pointer; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
+.fileup-admin .adm-lrow--link:hover,
+.fileup-admin .adm-lrow--link:focus-visible {
+  border-color: var(--accent); box-shadow: 0 8px 20px rgba(20, 130, 165, 0.12); transform: translateY(-2px);
+}
+.fileup-admin .adm-lrow__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.fileup-admin .adm-you-tag {
+  margin-left: 8px; padding: 1px 8px; border-radius: 999px;
+  background: var(--accent-soft); color: #0b6f8a; font-size: 11px; font-weight: 500;
+}
+.fileup-admin .adm-wait {
+  padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap;
+  background: var(--badge); color: var(--muted);
+}
+.fileup-admin .adm-wait--amber { background: var(--warn-chip); color: var(--warn-ink); }
+.fileup-admin .adm-wait--red { background: #fde8e8; color: #b42318; }
+
+.fileup-admin .adm-facts { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.fileup-admin .adm-fact { display: flex; flex-direction: column; }
+.fileup-admin .adm-fact__label { font-size: 12px; color: var(--muted); }
+.fileup-admin .adm-fact__value { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.fileup-admin .adm-flags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.fileup-admin .adm-lrow__open {
+  display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;
+  font-size: 13px; font-weight: 500; color: var(--accent);
+}
+.fileup-admin .adm-lrow__open .ti-chevron-right { transition: transform 0.2s; }
+.fileup-admin .adm-lrow--link:hover .adm-lrow__open .ti-chevron-right,
+.fileup-admin .adm-lrow--link:focus-visible .adm-lrow__open .ti-chevron-right { transform: translateX(3px); }
+
+.fileup-admin .adm-lrow__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.fileup-admin .adm-check { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; color: var(--ink); cursor: pointer; }
+.fileup-admin .adm-check input { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; accent-color: var(--accent); }
+.fileup-admin .adm-checklist {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px 14px; border: 0.5px solid var(--line); border-radius: 12px; background: var(--row);
+}
+.fileup-admin .adm-checklist__title { font-size: 13px; font-weight: 600; }
+.fileup-admin .adm-upload { margin-left: 8px; display: inline-flex; align-items: center; gap: 3px; vertical-align: baseline; }
+
+@media (max-width: 560px) {
+  .fileup-admin .adm-tiles { grid-template-columns: 1fr; }
+}
+
+/* dark tweaks for the new surfaces */
+.dark .fileup-admin .adm-mini__icon--wa { background: #114234; color: #5fe0c4; }
+.dark .fileup-admin .adm-wait--red { background: #3a1b1b; color: #f6a6a0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fileup-admin .adm-tile { animation: none !important; }
+  .fileup-admin .adm-tile,
+  .fileup-admin .adm-tile__chip,
+  .fileup-admin .adm-mini,
+  .fileup-admin .adm-lrow--link,
+  .fileup-admin .adm-lrow__open .ti-chevron-right { transition: none; }
+  .fileup-admin .adm-tile:hover,
+  .fileup-admin .adm-tile:focus-visible,
+  .fileup-admin .adm-mini:hover,
+  .fileup-admin .adm-mini:focus-visible,
+  .fileup-admin .adm-lrow--link:hover,
+  .fileup-admin .adm-lrow--link:focus-visible { transform: none; }
+}
+
+/* ==========================================================
+   Review return page — flag card, trace table, taxpayer chat.
+   ========================================================== */
+
+/* Flag card */
+.fileup-admin .adm-flagcard {
+  display: flex; gap: 12px; margin-top: 14px;
+  padding: 14px 16px; border: 1.5px solid var(--warn-line); border-radius: 16px; background: var(--warn-bg);
+}
+.fileup-admin .adm-flagcard__icon { flex-shrink: 0; margin-top: 1px; color: var(--warn-ink); }
+.fileup-admin .adm-flagcard__body { flex: 1; min-width: 0; }
+.fileup-admin .adm-flagcard__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.fileup-admin .adm-flagcard__name { font-size: 14px; font-weight: 600; }
+.fileup-admin .adm-flagcard__amt { font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fileup-admin .adm-flagcard__reason { margin: 4px 0 10px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.fileup-admin .adm-flagcard__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.fileup-admin .adm-flagcard__done-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; color: #14633f; }
+.fileup-admin .adm-flagcard--done { border: 0.5px solid var(--line); background: var(--surface); }
+.fileup-admin .adm-flagcard--done .adm-flagcard__icon { color: #14633f; }
+.dark .fileup-admin .adm-flagcard__done-tag,
+.dark .fileup-admin .adm-flagcard--done .adm-flagcard__icon { color: #7fe0a6; }
+
+/* Trace table */
+.fileup-admin .adm-trace { background: var(--row); border-radius: 12px; padding: 2px; }
+.fileup-admin .adm-trace__scroll { overflow-x: auto; }
+.fileup-admin .adm-trace__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.fileup-admin .adm-trace__table th,
+.fileup-admin .adm-trace__table td { text-align: left; padding: 10px 12px; vertical-align: top; }
+.fileup-admin .adm-trace__table thead th { font-size: 12px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.fileup-admin .adm-trace__table tbody th { font-weight: 500; color: var(--ink); }
+.fileup-admin .adm-trace__table tbody tr { border-top: 0.5px solid var(--line); }
+.fileup-admin .adm-trace__amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fileup-admin .adm-trace__row--low { background: var(--warn-bg); }
+.fileup-admin .adm-trace__row--total { background: var(--accent-wash); }
+.fileup-admin .adm-trace__row--total th,
+.fileup-admin .adm-trace__row--total td { font-weight: 600; }
+.fileup-admin .adm-found { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.fileup-admin .adm-found--link { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-align: left; }
+.fileup-admin .adm-found--link:hover { text-decoration: underline; }
+.fileup-admin .adm-conf { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.fileup-admin .adm-conf--high { background: #e3f6ec; color: #17643d; }
+.fileup-admin .adm-conf--low { background: var(--warn-chip); color: var(--warn-ink); }
+.dark .fileup-admin .adm-conf--high { background: #13311f; color: #7fe0a6; }
+
+/* Taxpayer chat */
+.fileup-admin .adm-chat__list {
+  display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto;
+  padding: 4px 2px; margin-bottom: 12px;
+}
+.fileup-admin .adm-chat__empty { padding: 8px 2px; font-size: 13px; color: var(--subtle); }
+.fileup-admin .adm-bub { max-width: 85%; padding: 9px 13px; border-radius: 14px; font-size: 13px; line-height: 1.5; }
+.fileup-admin .adm-bub--me { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 5px; }
+.fileup-admin .adm-bub--ai { align-self: flex-start; background: var(--row); color: var(--ink); border-bottom-left-radius: 5px; }
+.fileup-admin .adm-bub--think { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); }
+.fileup-admin .adm-bub__table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 12px; }
+.fileup-admin .adm-bub__table td { padding: 4px 0; border-top: 0.5px solid var(--line); }
+.fileup-admin .adm-bub__table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.fileup-admin .adm-bub__total td { font-weight: 600; }
+.fileup-admin .adm-chat__chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.fileup-admin .adm-chat__form { display: flex; gap: 8px; }
+.fileup-admin .adm-chat__form .input { flex: 1; }
+
+/* Send + collapsible documents */
+.fileup-admin .adm-send { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 14px; }
+.fileup-admin .adm-docs-collapse { padding: 0; }
+.fileup-admin .adm-docs-summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 16px 20px; cursor: pointer; list-style: none; font-size: 15px; font-weight: 500;
+}
+.fileup-admin .adm-docs-summary::-webkit-details-marker { display: none; }
+.fileup-admin .adm-docs-chev { transition: transform 0.2s; }
+.fileup-admin .adm-docs-collapse[open] .adm-docs-chev { transform: rotate(180deg); }
+.fileup-admin .adm-docs-collapse__list { padding: 0 20px 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fileup-admin .adm-docs-chev { transition: none; }
+}

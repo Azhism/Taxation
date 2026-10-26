@@ -12,7 +12,7 @@ export default function DocumentsList() {
   const navigate = useNavigate();
   const { s, docsContinue } = useFileUp();
 
-  if (s.stage > 2) return <Navigate to="/dashboard" replace />;
+  if (!s.started || s.stage > 2) return <Navigate to="/dashboard" replace />;
 
   const n = requiredCount(s);
   const todo = !bankReady(s) ? "bank" : !payReady(s) ? "pay" : null;
@@ -20,7 +20,13 @@ export default function DocumentsList() {
 
   return (
     <div className="view">
-      <Crumbs items={[{ text: "Dashboard", to: "/dashboard" }, { text: "Documents" }]} />
+      <Crumbs
+        items={[
+          { text: "Dashboard", to: "/dashboard" },
+          { text: "2025-26 return", to: "/dashboard/return" },
+          { text: "Documents" },
+        ]}
+      />
 
       <div className="docs-head">
         <h1 className="page-title">Your documents</h1>
@@ -71,7 +77,7 @@ export default function DocumentsList() {
             );
           }
 
-          const goDoc = () => navigate("/dashboard/documents/" + d.slug);
+          const goDoc = () => navigate("/dashboard/return/documents/" + d.slug);
           return (
             <div
               key={d.id}
@@ -105,7 +111,7 @@ export default function DocumentsList() {
             className={"btn " + (open ? "btn--primary" : "btn--secondary")}
             type="button"
             onClick={() => {
-              if (docsContinue()) navigate("/dashboard");
+              if (docsContinue()) navigate("/dashboard/return");
             }}
           >
             Continue

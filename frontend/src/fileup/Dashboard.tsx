@@ -1,24 +1,22 @@
-/* Dashboard: greeting, 5-step tracker, and one "current step" card
-   for each of the seven statuses (the resume view). */
+/* The filing workflow page at /dashboard/return: breadcrumb, tracker and
+   one "current step" card for each status. Steps 1 (Review) and 2 (Submit)
+   render inline here. Only reachable once the user has started. */
 
-import { ReactNode, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { ReactNode } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 
-import { CONFIG } from "./shared";
+import {
+  AMOUNTS,
+  ESTIMATE_DONE,
+  ESTIMATE_LINES,
+  STEP_NUMBER,
+  feeDue,
+  money,
+} from "./shared";
 import { useFileUp } from "./store";
 import ReviewContent from "./ReviewContent";
 import SubmitForm from "./SubmitForm";
-import { Ti, Tracker } from "./ui";
-
-function firstName(): string {
-  try {
-    const n = (localStorage.getItem("USER_NAME") || "").trim().split(/\s+/)[0];
-    if (n) return n;
-  } catch {
-    /* ignore */
-  }
-  return "Demo";
-}
+import { CountUp, Crumbs, PageTitle, Ti, Tracker } from "./ui";
 
 type TlItem = { icon: ReactNode; text: string; muted?: boolean };
 
@@ -32,6 +30,51 @@ function Timeline({ items }: { items: TlItem[] }) {
         </div>
       ))}
     </div>
+  );
+}
+
+const tlDone = (text: string): TlItem => ({ icon: <Ti name="ti-circle-check" cls="i20 c-accent" />, text });
+const tlBusy = (text: string): TlItem => ({ icon: <Ti name="ti-loader-2" cls="spin i20 c-accent" />, text });
+const tlTodo = (text: string): TlItem => ({ icon: <Ti name="ti-circle" cls="i20 c-gray" />, text, muted: true });
+
+/* The instant AI estimate: four steps while the model works, then the
+   number. The number is never final. */
+function EstimateBlock({ phase }: { phase: number }) {
+  return (
+    <>
+      <div className="tl tl--steps">
+        {ESTIMATE_LINES.map((line, i) => {
+          if (i < phase) return <div key={i} className="tl__item">{tlDone(ESTIMATE_DONE[i]).icon}<span>{ESTIMATE_DONE[i]}</span></div>;
+          if (i === phase)
+            return (
+              <div key={i} className="tl__item">
+                <Ti name="ti-loader-2" cls="spin i20 c-accent" />
+                <span>{line}...</span>
+              </div>
+            );
+          return (
+            <div key={i} className="tl__item is-muted">
+              <Ti name="ti-circle" cls="i20 c-gray" />
+              <span>{line}</span>
+            </div>
+          );
+        })}
+      </div>
+      {phase >= 4 && (
+        <div className="result result--est">
+          <div className="result__row">
+            <span className="result__label">Estimated income tax</span>
+            <span className="tag-ai">AI estimate</span>
+          </div>
+          <div className="result__value">
+            <CountUp to={AMOUNTS.ESTIMATE} />
+          </div>
+          <p className="result__note">
+            This is not final. Our team will check it and get back to you within a day.
+          </p>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -60,24 +103,26 @@ function StageCard({ c }: { c: Card }) {
   );
 }
 
-export default function Dashboard() {
+export default function ReturnPage() {
   const navigate = useNavigate();
   const { s } = useFileUp();
-  const waitbar = useRef<HTMLDivElement>(null);
+  const st = s.stage;
 
-  // Animate the (prototype) "team is working" meter from elapsed -> 100%.
-  useEffect(() => {
-    if (s.stage !== 3) return;
-    const fill = waitbar.current;
-    if (!fill) return;
-    const elapsed = Date.now() - s.submittedAt;
-    const remain = Math.max(0, CONFIG.SIMULATE_TEAM_WAIT_MS - elapsed);
-    fill.style.transition = "none";
-    fill.style.width = Math.min(100, (elapsed / CONFIG.SIMULATE_TEAM_WAIT_MS) * 100) + "%";
-    void fill.offsetWidth; // force reflow so the next transition runs
-    fill.style.transition = "width " + remain + "ms linear";
-    fill.style.width = "100%";
-  }, [s.stage, s.submittedAt]);
+  if (!s.started) return <Navigate to="/dashboard" replace />;
+
+  const crumbs = <Crumbs items={[{ text: "Dashboard", to: "/dashboard" }, { text: "2025-26 return" }]} />;
+
+  // Steps 1 (Review) and 2 (Submit) render inline on this page; they bring
+  // their own title, so show only the breadcrumb and tracker here.
+  if (st === 1 || st === 2) {
+    return (
+      <div className="view">
+        {crumbs}
+        <Tracker stage={st} />
+        {st === 1 ? <ReviewContent /> : <SubmitForm />}
+      </div>
+    );
+  }
 
   const nextBtn = (label: string, to: string) => (
     <button className="btn btn--primary" type="button" onClick={() => navigate(to)}>
@@ -85,85 +130,89 @@ export default function Dashboard() {
       <Ti name="ti-arrow-right" cls="i18" />
     </button>
   );
-
+  const n = "Step " + STEP_NUMBER[st] + " of 5";
   let card: Card;
-  const st = s.stage;
 
-  // Steps 2 (Review) and 3 (Submit) are single screens: show their form here
-  // directly, rather than an intro card with a Next button that opens a
-  // separate page.
-  if (st === 1 || st === 2) {
-    return (
-      <div className="view">
-        <h1 className="greet">Welcome back, {firstName()}</h1>
-        <p className="page-sub">Tax year 2025-26</p>
-        <Tracker stage={st} />
-        {st === 1 ? <ReviewContent /> : <SubmitForm />}
-      </div>
-    );
-  }
-
-  if (st === 0)
+  if (st === 0) {
     card = {
       icon: "ti-upload",
-      eyebrow: "Step 1 of 5",
+      eyebrow: n,
       title: "Upload your documents",
       text: "Add your bank statements and payslip. Click Next to get started.",
-      button: nextBtn("Next", "/dashboard/documents"),
+      button: nextBtn("Next", "/dashboard/return/documents"),
     };
-  else if (st === 3)
+  } else if (st === 3) {
+    const ready = s.estPhase >= 4;
     card = {
-      icon: "ti-circle-check",
-      solid: true,
-      eyebrow: "Step 3 of 5",
-      title: "Your documents have been submitted",
-      text: "We've forwarded them to our team. We will get back to you in a while.",
+      icon: "ti-sparkles",
+      eyebrow: n,
+      title: ready ? "Your estimate is ready" : "We're working out your estimate",
+      text: ready ? "Our team will confirm it for you." : "This only takes a moment.",
       extra: (
         <>
-          <div className="wait">
-            <div className="wait__label">
-              <Ti name="ti-loader-2" cls="spin i16 c-accent" />
-              Our team is preparing your return
-            </div>
-            <div className="meter">
-              <div className="meter__fill" ref={waitbar} id="waitbar" />
-            </div>
-          </div>
-          <Timeline
-            items={[
-              { icon: <Ti name="ti-circle-check" cls="i20 c-accent" />, text: "Documents submitted" },
-              { icon: <Ti name="ti-loader-2" cls="spin i20 c-accent" />, text: "With our team" },
-              { icon: <Ti name="ti-circle" cls="i20 c-gray" />, text: "Ready for your approval", muted: true },
-            ]}
-          />
+          <EstimateBlock phase={s.estPhase} />
+          {ready && (
+            <>
+              <div className="stage__sep" />
+              <Timeline
+                items={[
+                  tlDone("Documents submitted"),
+                  tlDone("AI estimate ready"),
+                  tlBusy("Our team is confirming it"),
+                  tlTodo("You review and approve"),
+                ]}
+              />
+            </>
+          )}
         </>
       ),
     };
-  else if (st === 4)
+  } else if (st === 4) {
     card = {
       icon: "ti-file-check",
-      eyebrow: "Step 4 of 5",
+      eyebrow: n,
       title: "Your return is ready for approval",
       text: "Our team has prepared it. Review it and let us know if we can file.",
-      button: nextBtn("Review and approve", "/dashboard/approval"),
+      button: nextBtn("Review and approve", "/dashboard/return/approval"),
     };
-  else if (st === 5)
+  } else if (st === 5) {
+    card = {
+      icon: "ti-credit-card",
+      eyebrow: n,
+      title: "Pay the service fee",
+      text: "Your return is approved. Pay the fee to file it.",
+      button: nextBtn("Pay " + money(feeDue(s)), "/dashboard/return/payment"),
+    };
+  } else if (st === 6) {
+    const filing = s.filePhase >= 1;
     card = {
       icon: "ti-building-community",
-      eyebrow: "Step 5 of 5",
+      eyebrow: n,
       title: "Your return is being filed",
-      text: "Your documents are in the process of being filed. We will let you know once they are filed.",
+      text: filing
+        ? "Your payment is confirmed and we're filing your return. We will let you know once it's filed."
+        : "We've received your payment and we're confirming it. We will let you know once your return is filed.",
       extra: (
         <Timeline
-          items={[
-            { icon: <Ti name="ti-circle-check" cls="i20 c-accent" />, text: "You approved the return" },
-            { icon: <Ti name="ti-loader-2" cls="spin i20 c-accent" />, text: "Filing in progress" },
-            { icon: <Ti name="ti-circle" cls="i20 c-gray" />, text: "Filed", muted: true },
-          ]}
+          items={
+            filing
+              ? [
+                  tlDone("You approved the return"),
+                  tlDone("Payment verified"),
+                  tlBusy("Filing in progress"),
+                  tlTodo("Filed"),
+                ]
+              : [
+                  tlDone("You approved the return"),
+                  tlBusy("Verifying your payment"),
+                  tlTodo("Filing in progress"),
+                  tlTodo("Filed"),
+                ]
+          }
         />
       ),
     };
-  else
+  } else {
     card = {
       icon: "ti-check",
       solid: true,
@@ -177,6 +226,7 @@ export default function Dashboard() {
         </button>
       ),
     };
+  }
 
   return (
     <div className="view">
@@ -188,8 +238,16 @@ export default function Dashboard() {
           </span>
         </div>
       )}
-      <h1 className="greet">Welcome back, {firstName()}</h1>
-      <p className="page-sub">Tax year 2025-26</p>
+      {s.notice && (
+        <div className={"banner banner--" + s.notice.tone} role="status">
+          <Ti name={s.notice.tone === "warn" ? "ti-alert-circle" : "ti-circle-check"} cls="i20" />
+          <span>
+            <strong>{s.notice.text}</strong> {s.notice.sub}
+          </span>
+        </div>
+      )}
+      {crumbs}
+      <PageTitle title="Your 2025-26 return" sub="Follow the steps to file." />
       <Tracker stage={st} />
       <StageCard c={card} />
     </div>

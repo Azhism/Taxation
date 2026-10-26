@@ -113,12 +113,22 @@
 
 .fileup-landing .lang {
   padding: 5px 11px;
-  border: 0.5px solid #cfdde5;
+  border: 0.5px solid var(--line-strong, #cfdde5);
   border-radius: 8px;
   background: var(--surface);
   color: var(--ink);
   font-size: 13px;
 }
+
+.fileup-landing .lang--icon {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.fileup-landing .lang--icon i { font-size: 17px; }
 
 /* ---------- Hero ---------- */
 
@@ -462,6 +472,36 @@
   .fileup-landing .steps { grid-template-columns: minmax(0, 1fr); }
   .fileup-landing .brand__tag { display: none; }
 }
+
+/* ==========================================================
+   DARK THEME — activated by the `dark` class on <html>.
+   ========================================================== */
+
+.dark .fileup-landing {
+  --bg: #0b1220;
+  --surface: #121d30;
+  --ink: #e7eef7;
+  --muted: #93a4bb;
+  --accent: #22b8dd;
+  --accent-soft: #10303d;
+  --accent-wash: #0e2a36;
+  --row: #16233a;
+  --badge: #1a2740;
+  --line: #26344d;
+  --line-strong: #324663;
+  --track: #2a3850;
+  --dash: #2e3e58;
+  --glow: #0e2c38;
+  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-lift: 0 14px 28px rgba(0, 0, 0, 0.5);
+}
+
+.dark .fileup-landing .nav,
+.dark .fileup-landing .trust { background: rgba(18, 29, 48, 0.7); }
+.dark .fileup-landing .btn--primary:hover { background: var(--accent-dark, #1aa0c4); }
+.dark .fileup-landing .btn--secondary { border-color: var(--line-strong); }
+.dark .fileup-landing .insight { background: linear-gradient(90deg, #10303d 0%, #0f2630 100%); }
+.dark .fileup-landing .chips li { background: var(--row); }
 
 @media (prefers-reduced-motion: reduce) {
   .fileup-landing .btn--primary,

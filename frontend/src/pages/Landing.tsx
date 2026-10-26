@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import { ThemeToggle } from "../ThemeToggle";
 import "./Landing.css";
 
 /* --- Animated "Your tax overview" card ---------------------------------- */
@@ -217,6 +218,7 @@ const Landing = () => {
             <button className="lang" type="button" aria-label="Switch language">
               EN | اردو
             </button>
+            <ThemeToggle className="lang lang--icon" />
           </nav>
         </div>
       </header>

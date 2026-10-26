@@ -6,6 +6,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 
 import { DocId, docById } from "./shared";
 import { useFileUp } from "./store";
+import { WaHint, WaPill } from "./whatsapp";
 import { Crumbs, PageTitle, Ti } from "./ui";
 
 function FileRow({
@@ -14,18 +15,23 @@ function FileRow({
   sub,
   done,
   extra,
+  wa,
 }: {
   icon: string;
   name: string;
   sub: string;
   done: boolean;
   extra?: ReactNode;
+  wa?: boolean;
 }) {
   return (
     <div className="frow">
       <Ti name={icon} cls="i20 c-accent" />
       <div className="frow__body">
-        <div className="frow__name">{name}</div>
+        <div className="frow__name">
+          {name}
+          {wa && <WaPill />}
+        </div>
         <div className="frow__sub">{sub}</div>
       </div>
       {done ? (
@@ -84,7 +90,7 @@ function DoneButton() {
   const navigate = useNavigate();
   return (
     <div className="page-actions page-actions--end">
-      <button className="btn btn--primary btn--sm" type="button" onClick={() => navigate("/dashboard/documents")}>
+      <button className="btn btn--primary btn--sm" type="button" onClick={() => navigate("/dashboard/return/documents")}>
         Done
       </button>
     </div>
@@ -107,14 +113,15 @@ export default function DocumentPage({ docId }: { docId: DocId }) {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [s.asset.chat.length]);
 
-  if (s.stage > 2) return <Navigate to="/dashboard" replace />;
+  if (!s.started || s.stage > 2) return <Navigate to="/dashboard" replace />;
 
   const head = (
     <>
       <Crumbs
         items={[
           { text: "Dashboard", to: "/dashboard" },
-          { text: "Documents", to: "/dashboard/documents" },
+          { text: "2025-26 return", to: "/dashboard/return" },
+          { text: "Documents", to: "/dashboard/return/documents" },
           { text: d.title },
         ]}
       />
@@ -151,7 +158,7 @@ export default function DocumentPage({ docId }: { docId: DocId }) {
             <>
               <div className="stack">
                 {s.bank.files.map((f) => (
-                  <FileRow key={f.id} icon="ti-file-type-pdf" name={f.bank} sub={f.name} done={f.done} />
+                  <FileRow key={f.id} icon="ti-file-type-pdf" name={f.bank} sub={f.name} done={f.done} wa={f.wa} />
                 ))}
               </div>
               <DropZone onActivate={store.addBank} label="Add another bank" small />
@@ -165,6 +172,7 @@ export default function DocumentPage({ docId }: { docId: DocId }) {
               </label>
             </>
           )}
+          <WaHint text="Or send your statements on WhatsApp. They appear here automatically." />
           <DoneButton />
         </>
       )}
@@ -183,7 +191,7 @@ export default function DocumentPage({ docId }: { docId: DocId }) {
             />
           ) : (
             <>
-              <FileRow icon="ti-file-type-pdf" name="Payslip" sub="payslip.pdf" done={s.pay.status === "done"} />
+              <FileRow icon="ti-file-type-pdf" name="Payslip" sub="payslip.pdf" done={s.pay.status === "done"} wa={s.pay.wa} />
               <div style={{ marginTop: 8 }}>
                 <button className="btn btn--secondary btn--sm" type="button" onClick={store.payUpload}>
                   Replace
@@ -191,6 +199,7 @@ export default function DocumentPage({ docId }: { docId: DocId }) {
               </div>
             </>
           )}
+          <WaHint text="Or send your payslip on WhatsApp. It appears here automatically." />
           <DoneButton />
         </>
       )}
@@ -233,6 +242,7 @@ export default function DocumentPage({ docId }: { docId: DocId }) {
               }
             />
           )}
+          <WaHint text="Or send them on WhatsApp. They appear here automatically." />
           <div className="page-actions">
             {s.wh.files.length ? (
               <span />
@@ -242,7 +252,7 @@ export default function DocumentPage({ docId }: { docId: DocId }) {
                 type="button"
                 onClick={() => {
                   store.whNone();
-                  navigate("/dashboard/documents");
+                  navigate("/dashboard/return/documents");
                 }}
               >
                 Nothing to add
@@ -251,7 +261,7 @@ export default function DocumentPage({ docId }: { docId: DocId }) {
             <button
               className="btn btn--primary btn--sm"
               type="button"
-              onClick={() => navigate("/dashboard/documents")}
+              onClick={() => navigate("/dashboard/return/documents")}
             >
               Done
             </button>
@@ -301,6 +311,7 @@ export default function DocumentPage({ docId }: { docId: DocId }) {
               <Ti name="ti-arrow-up" cls="i18" />
             </button>
           </div>
+          <WaHint text="Prefer to talk? Tell us on WhatsApp instead." />
           <DoneButton />
         </>
       )}

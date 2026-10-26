@@ -20,12 +20,12 @@ export default function SubmitForm() {
       return;
     }
     submit();
-    navigate("/dashboard");
+    navigate("/dashboard/return");
   }
 
   return (
     <>
-      <PageTitle title="Submit your documents" sub="Once you submit, our team starts preparing your return." />
+      <PageTitle title="Submit your documents" sub="We'll read them and work out your estimate straight away." />
 
       <div className="summary">
         {uploadedSummary(s).map((x, i) => (
@@ -56,13 +56,13 @@ export default function SubmitForm() {
           className="btn btn--secondary"
           type="button"
           onClick={() => {
-            setStage(1); // back to the review step (shown on the dashboard)
-            navigate("/dashboard");
+            setStage(1); // back to the review step (shown on the workflow page)
+            navigate("/dashboard/return");
           }}
         >
           Back
         </button>
-        <button className="btn btn--primary" type="button" onClick={onSubmit}>
+        <button className="btn btn--primary" type="button" onClick={onSubmit} disabled={!consent}>
           Submit to FileUp
           <Ti name="ti-send" cls="i18" />
         </button>

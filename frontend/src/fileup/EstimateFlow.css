@@ -1,0 +1,288 @@
+/* ==========================================================
+   AI estimate flow (two screens): "Preparing your estimate"
+   loading screen that auto-advances to "Your estimate is ready".
+
+   Self-contained and light-theme only, scoped under .est. The
+   color tokens are the exact values from the design spec, so this
+   block is independent of the app's dark-mode tokens elsewhere.
+
+   In production, tie each loading tick to real backend progress
+   (the model's extraction/calculation stream) instead of the
+   fixed demo timers used here.
+   ========================================================== */
+
+.est {
+  /* Brand */
+  --est-teal: #13a3c4;
+  --est-teal-dark: #0b7f9b;
+  --est-tint: #e3f3f8;
+
+  /* Surfaces and text */
+  --est-bg: #f3f8fc;
+  --est-card: #ffffff;
+  --est-border: #e1e9f0;
+  --est-ink: #1b2a3a;
+  --est-muted: #64748b;
+  --est-pending: #94a3b8;
+
+  /* Progress track */
+  --est-track: #e4edf3;
+
+  /* Success tile */
+  --est-ok-bg: #ddf4e7;
+  --est-ok-icon: #1d7448;
+
+  /* Caution alert */
+  --est-warn-bg: #fff7e6;
+  --est-warn-border: #f3dfb0;
+  --est-warn-icon: #b7791f;
+  --est-warn-title: #5c3d0a;
+  --est-warn-body: #6b4e16;
+
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+  color: var(--est-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.est,
+.est *,
+.est *::before,
+.est *::after { box-sizing: border-box; }
+
+/* The demo page: screen background, centered column, the card and
+   the demo-only Replay button underneath it. */
+.est-page {
+  min-height: 100vh;
+  background: var(--est-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 32px 16px;
+}
+
+.est-card {
+  width: 380px;
+  max-width: 100%;
+  background: var(--est-card);
+  border: 1px solid var(--est-border);
+  border-radius: 16px;
+  padding: 22px;
+}
+
+/* Cross-fade between the two screens. */
+.est-fade { animation: est-in 0.35s ease both; }
+@keyframes est-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.est-card.is-leaving { animation: est-out 0.35s ease both; }
+@keyframes est-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ---------- Shared head (tile + heading) ---------- */
+
+.est-tile {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.est-tile--teal { background: var(--est-tint); color: var(--est-teal); }
+.est-tile--ok { background: var(--est-ok-bg); color: var(--est-ok-icon); }
+.est-tile i { font-size: 24px; line-height: 1; }
+
+.est-h {
+  margin: 14px 0 0;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.est-sub {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--est-muted);
+}
+
+/* ---------- Screen 1: loading ---------- */
+
+.est-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--est-track);
+  margin: 18px 0 4px;
+  overflow: hidden;
+}
+.est-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--est-teal);
+  width: 0;
+  transition: width 0.5s ease;
+}
+
+.est-steps {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.est-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.est-step i { font-size: 20px; line-height: 1; flex: none; }
+.est-step--pending { color: var(--est-pending); }
+.est-step--pending i { color: var(--est-pending); }
+.est-step--active,
+.est-step--done { color: var(--est-ink); }
+.est-step--active i,
+.est-step--done i { color: var(--est-teal); }
+
+/* ---------- Screen 2: estimate ---------- */
+
+.est-amount {
+  margin-top: 16px;
+  background: var(--est-tint);
+  border-radius: 16px;
+  padding: 16px;
+}
+.est-amount__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.est-amount__label { font-size: 13px; color: var(--est-muted); }
+.est-pill {
+  flex: none;
+  background: var(--est-card);
+  border: 1px solid #bfe3ee;
+  color: var(--est-teal-dark);
+  font-size: 11px;
+  line-height: 1;
+  padding: 5px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.est-amount__value {
+  margin-top: 10px;
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1.05;
+  color: var(--est-teal);
+}
+
+.est-alert {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  background: var(--est-warn-bg);
+  border: 1px solid var(--est-warn-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.est-alert i { font-size: 16px; line-height: 1; flex: none; color: var(--est-warn-icon); margin-top: 1px; }
+.est-alert p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--est-warn-body);
+}
+.est-alert strong { font-weight: 500; color: var(--est-warn-title); }
+
+/* Confirmation timeline */
+.est-tl {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+}
+.est-tl__row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  column-gap: 12px;
+}
+.est-tl__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.est-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.est-dot--done { background: var(--est-teal); color: #fff; }
+.est-dot--done i { font-size: 13px; line-height: 1; }
+.est-dot--busy { color: var(--est-teal); }
+.est-dot--busy i { font-size: 20px; line-height: 1; }
+.est-dot--todo {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--est-pending);
+  background: transparent;
+}
+.est-connector {
+  width: 2px;
+  flex: 1;
+  min-height: 16px;
+  margin: 2px 0;
+}
+.est-connector--teal { background: var(--est-teal); }
+.est-connector--gray { background: var(--est-track); }
+
+.est-tl__body { padding-bottom: 14px; }
+.est-tl__row:last-child .est-tl__body { padding-bottom: 0; }
+.est-tl__title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.est-tl__title--muted { color: var(--est-muted); }
+.est-tl__sub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--est-muted);
+}
+
+/* ---------- Demo-only Replay control ---------- */
+
+.est-replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  color: var(--est-muted);
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+.est-replay i { font-size: 16px; line-height: 1; }
+.est-replay:hover { color: var(--est-ink); }
+.est-replay:focus-visible { outline: 2px solid var(--est-teal); outline-offset: 2px; }
+
+/* ---------- Spinner ---------- */
+
+.est .est-spin { animation: est-spin 0.9s linear infinite; }
+@keyframes est-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .est-fade,
+  .est-card.is-leaving { animation: none; }
+  .est-bar__fill { transition: none; }
+  .est .est-spin { animation: none; }
+}

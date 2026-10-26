@@ -123,7 +123,13 @@
 }
 .fileup-app .btn--secondary:hover { border-color: var(--accent); }
 
+.fileup-app .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.fileup-app .btn--primary:disabled:hover { background: var(--accent); }
+
 .fileup-app .btn--sm { height: 32px; padding: 0 14px; border-radius: 9px; font-size: 13px; }
+.fileup-app .btn--icon { padding: 0; width: 48px; }
+.fileup-app .btn--sm.btn--icon { width: 32px; }
+.fileup-app .btn--icon i { font-size: 18px; }
 .fileup-app .btn--sm.btn--secondary:hover { border-color: var(--accent); color: var(--accent); }
 .fileup-app .btn--text { height: auto; padding: 0; border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 500; }
 .fileup-app .btn--text:hover { text-decoration: underline; }
@@ -133,11 +139,7 @@
 @keyframes fileup-spin { to { transform: rotate(360deg); } }
 .fileup-app .spin { display: inline-block; animation: fileup-spin 0.9s linear infinite; }
 
-@keyframes fileup-viewin {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
-}
-.fileup-app .view { animation: fileup-viewin 0.25s ease-out; }
+/* .view children animate individually in the motion section below. */
 
 /* ---------- Layout ---------- */
 
@@ -167,6 +169,26 @@
   background: var(--accent-soft); color: #0b6f8a;
   font-size: 12px; font-weight: 500;
 }
+
+/* Profile menu: the avatar becomes a button that opens a small popover. */
+.fileup-app .app-menu { position: relative; display: inline-flex; }
+.fileup-app .avatar--btn { border: 0; padding: 0; font: inherit; cursor: pointer; transition: box-shadow 0.15s; }
+.fileup-app .avatar--btn:hover,
+.fileup-app .avatar--btn[aria-expanded="true"] { box-shadow: 0 0 0 3px rgba(20, 163, 199, 0.22); }
+.fileup-app .app-menu__pop {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 60; min-width: 210px;
+  padding: 6px; border: 0.5px solid var(--line); border-radius: 14px;
+  background: var(--surface); box-shadow: var(--shadow-card);
+}
+.fileup-app .app-menu__id { padding: 8px 10px 10px; margin-bottom: 4px; border-bottom: 0.5px solid var(--line); }
+.fileup-app .app-menu__name { font-size: 14px; font-weight: 500; }
+.fileup-app .app-menu__email { margin-top: 1px; font-size: 12px; color: var(--muted); word-break: break-all; }
+.fileup-app .app-menu__item {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px;
+  border: 0; border-radius: 10px; background: none; color: var(--ink);
+  font-size: 14px; text-align: left; cursor: pointer;
+}
+.fileup-app .app-menu__item:hover { background: var(--row); }
 
 /* titles */
 .fileup-app .greet { font-size: 26px; font-weight: 500; letter-spacing: -0.01em; }
@@ -258,6 +280,15 @@
 .fileup-app .doc__status { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .fileup-app .doc__status--done { color: var(--ok-ink); }
 .fileup-app .doc__status--warn { color: var(--warn-ink); }
+.fileup-app .doc__status--todo { color: var(--accent); font-weight: 500; }
+
+/* Home panel icon-chip variants + clickable rows */
+.fileup-app .doc__icon--done { background: var(--accent); color: #fff; }
+.fileup-app .doc__icon--todo { background: var(--badge); color: var(--gray-dot); }
+.fileup-app .need__item--link { cursor: pointer; border-radius: 12px; margin: -4px -8px; padding: 4px 8px; transition: background 0.2s; }
+.fileup-app .need__item--link:hover { background: var(--row); }
+.fileup-app .need__item--link .ti-chevron-right { transition: transform 0.2s; }
+.fileup-app .need__item--link:hover .ti-chevron-right { transform: translateX(3px); }
 
 .fileup-app .page-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
 .fileup-app .page-actions--end { justify-content: flex-end; }
@@ -337,6 +368,90 @@
 .fileup-app .sent__text { margin-top: 2px; font-size: 13px; color: var(--muted); }
 .fileup-app .ask-title { margin-bottom: 8px; font-size: 14px; font-weight: 500; }
 
+/* ==========================================================
+   ESTIMATE, FEE, PAYMENT
+   ========================================================== */
+
+/* AI estimate + final amount cards */
+.fileup-app .result__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.fileup-app .result__note { margin-top: 8px; font-size: 13px; line-height: 1.5; color: #475569; }
+.fileup-app .result__value { font-variant-numeric: tabular-nums; }
+.fileup-app .result--est { margin-top: 16px; margin-bottom: 0; }
+.fileup-app .result--est .result__value { font-variant-numeric: tabular-nums; }
+.fileup-app .stage__sep { height: 18px; }
+.fileup-app .tl--steps { margin-bottom: 4px; }
+
+.fileup-app .tag-ai,
+.fileup-app .tag-ok,
+.fileup-app .tag-muted {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; white-space: nowrap;
+}
+.fileup-app .tag-ai { background: var(--surface); color: #0b6f8a; border: 0.5px solid var(--line); }
+.fileup-app .tag-ok { background: #e3f6ec; color: #17643d; }
+.fileup-app .tag-muted { background: var(--surface); color: var(--muted); border: 0.5px solid var(--line); }
+
+/* estimate line on Home while the team confirms it */
+.fileup-app .estline {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px; padding: 10px 12px;
+  border-radius: 12px; background: #f0f7fa; font-size: 13px;
+}
+.fileup-app .estline__label { flex: 1; color: #475569; }
+.fileup-app .estline__value { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.fileup-app .fine { margin-top: 12px; font-size: 12px; color: var(--muted); }
+
+/* income tax + service fee */
+.fileup-app .fees {
+  margin-bottom: 12px; padding: 4px 18px;
+  border: 0.5px solid var(--line); border-radius: 16px; background: var(--surface);
+}
+.fileup-app .fees__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px; }
+.fileup-app .fees__row + .fees__row { border-top: 0.5px solid var(--line); }
+.fileup-app .fees__sub { font-size: 12px; color: var(--muted); }
+.fileup-app .fees__fee { font-weight: 500; }
+.fileup-app .fees__total { font-size: 18px; font-weight: 500; color: var(--accent); font-variant-numeric: tabular-nums; }
+.fileup-app .fees__coupon { display: inline-flex; align-items: center; gap: 6px; }
+
+/* panel right-hand status (Home "Your documents" / "What you owe") */
+.fileup-app .need__right { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.fileup-app .need__todo { color: var(--accent); font-weight: 500; }
+.fileup-app .panel .doc__meta { line-height: 1.4; }
+
+/* payment page */
+.fileup-app .section-label { margin-bottom: 8px; font-size: 14px; font-weight: 500; }
+.fileup-app .section-label .optional { font-weight: 400; color: var(--muted); }
+.fileup-app .acct { margin-bottom: 14px; padding: 14px 18px 6px; border: 0.5px solid var(--line); border-radius: 16px; background: var(--surface); }
+.fileup-app .acct .section-label { margin-bottom: 2px; }
+.fileup-app .acct__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px; }
+.fileup-app .acct__row + .acct__row { border-top: 0.5px solid var(--line); }
+.fileup-app .acct__label { font-size: 12px; color: var(--muted); }
+.fileup-app .coupon { display: flex; gap: 8px; }
+.fileup-app .coupon .btn { height: 42px; }
+.fileup-app .input {
+  width: 100%; height: 42px; padding: 0 12px;
+  border: 0.5px solid var(--line-strong); border-radius: 11px;
+  background: var(--surface); color: var(--ink);
+  font: inherit; font-size: 14px; outline: none;
+}
+.fileup-app .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(20, 163, 199, 0.15); }
+.fileup-app .input::placeholder { color: var(--subtle); }
+.fileup-app .alert {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 16px; padding: 12px 14px;
+  border: 0.5px solid var(--warn-line); border-radius: 14px;
+  background: var(--warn-bg); color: #7c3a0b; font-size: 14px;
+}
+.fileup-app .alert strong { font-weight: 500; }
+.fileup-app .banner--ok { border-color: #bfe6d2; background: #e3f6ec; color: #14532d; }
+.fileup-app .banner--warn { border-color: var(--warn-line); background: var(--warn-bg); color: #7c3a0b; }
+
+@media (max-width: 560px) {
+  .fileup-app .coupon { flex-wrap: wrap; }
+  .fileup-app .coupon .input { flex: 1 1 100%; }
+}
+
 /* prototype-only preview bar (shown with ?preview) */
 .fileup-app .devbar { max-width: 604px; margin: 0 auto; padding: 0 24px 40px; }
 .fileup-app .devbar__label { margin-bottom: 6px; font-size: 12px; color: var(--muted); }
@@ -348,12 +463,391 @@
   .fileup-app .stage__actions { flex-wrap: wrap; }
 }
 
+/* ---------- Home dashboard ---------- */
+
+.fileup-app .stage__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.fileup-app .stage__head .stage__title { margin-bottom: 0; }
+.fileup-app .status { padding: 5px 12px; border-radius: 999px; background: var(--badge); color: var(--muted); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.fileup-app .status--active { background: var(--accent-soft); color: #0b6f8a; }
+.fileup-app .status--attention { background: var(--warn-chip); color: var(--warn-ink); }
+.fileup-app .status--done { background: #e3f6ec; color: #17643d; }
+.fileup-app .segbar { display: flex; gap: 5px; margin-bottom: 20px; }
+.fileup-app .segbar__seg { flex: 1; height: 4px; border-radius: 2px; background: var(--track); }
+.fileup-app .segbar__seg.is-on { background: var(--accent); }
+.fileup-app .segbar__seg.is-now { background: #8fd0e2; }
+.fileup-app .panel { margin-top: 14px; padding: 18px 20px; border: 0.5px solid var(--line); border-radius: 18px; background: var(--surface); }
+.fileup-app .panel__title { margin-bottom: 12px; font-size: 15px; font-weight: 500; }
+.fileup-app .need { display: flex; flex-direction: column; gap: 12px; }
+.fileup-app .need__item { display: flex; align-items: center; gap: 12px; }
+.fileup-app .need__name { font-size: 14px; }
+.fileup-app .help { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 4px 4px; font-size: 13px; color: var(--muted); }
+.fileup-app .help .btn--text { margin-left: auto; }
+
+/* ==========================================================
+   MOTION — page entrance, feedback, status. Switched off for
+   prefers-reduced-motion at the end.
+   ========================================================== */
+
+@keyframes fu-rise     { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes fu-pop      { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes fu-slideIn  { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@keyframes fu-bubIn    { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes fu-dropIn   { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes fu-ring     { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(16deg); } 30% { transform: rotate(-14deg); } 45% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } 75% { transform: rotate(0); } }
+@keyframes fu-ripple   { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.9); opacity: 0; } }
+@keyframes fu-grow     { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes fu-blink    { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes fu-shimmer  { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes fu-shake    { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes fu-halo     { 0%, 100% { box-shadow: 0 0 0 4px rgba(20, 163, 199, 0.18); } 50% { box-shadow: 0 0 0 8px rgba(20, 163, 199, 0.08); } }
+
+/* page + children entrance */
+.fileup-app .view > * { animation: fu-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.fileup-app .view > *:nth-child(2) { animation-delay: 0.05s; }
+.fileup-app .view > *:nth-child(3) { animation-delay: 0.1s; }
+.fileup-app .view > *:nth-child(4) { animation-delay: 0.15s; }
+.fileup-app .view > *:nth-child(5) { animation-delay: 0.2s; }
+.fileup-app .view > *:nth-child(6) { animation-delay: 0.25s; }
+.fileup-app .view > *:nth-child(n+7) { animation-delay: 0.3s; }
+
+.fileup-app .doclist > .doc,
+.fileup-app .need__item,
+.fileup-app .stack > .frow { animation: fu-rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.fileup-app .doclist > .doc:nth-child(1),
+.fileup-app .need__item:nth-child(1),
+.fileup-app .stack > .frow:nth-child(1) { animation-delay: 0.08s; }
+.fileup-app .doclist > .doc:nth-child(2),
+.fileup-app .need__item:nth-child(2),
+.fileup-app .stack > .frow:nth-child(2) { animation-delay: 0.14s; }
+.fileup-app .doclist > .doc:nth-child(3),
+.fileup-app .need__item:nth-child(3),
+.fileup-app .stack > .frow:nth-child(3) { animation-delay: 0.2s; }
+.fileup-app .doclist > .doc:nth-child(4),
+.fileup-app .need__item:nth-child(4),
+.fileup-app .stack > .frow:nth-child(4) { animation-delay: 0.26s; }
+
+/* tracker */
+.fileup-app .tracker__dot.is-done { animation: fu-pop 0.4s both; }
+.fileup-app .tracker__dot.is-current { animation: fu-pop 0.4s both, fu-halo 2.2s 0.6s ease-in-out infinite; }
+.fileup-app .tracker__line.is-done {
+  background: linear-gradient(var(--accent), var(--accent)) left center / 100% 100% no-repeat, var(--track);
+}
+
+/* home progress segments + status pill */
+.fileup-app .segbar__seg { transform-origin: left; }
+.fileup-app .segbar__seg.is-on { animation: fu-grow 0.5s ease-out both; }
+.fileup-app .segbar__seg:nth-child(2).is-on { animation-delay: 0.1s; }
+.fileup-app .segbar__seg:nth-child(3).is-on { animation-delay: 0.2s; }
+.fileup-app .segbar__seg:nth-child(4).is-on { animation-delay: 0.3s; }
+.fileup-app .segbar__seg:nth-child(5).is-on { animation-delay: 0.4s; }
+.fileup-app .segbar__seg.is-now { animation: fu-blink 1.6s ease-in-out infinite; }
+.fileup-app .status { animation: fu-pop 0.45s 0.2s both; }
+
+/* banner: drops in, bell rings */
+.fileup-app .view > .banner { animation: fu-dropIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.fileup-app .banner .ti-bell-ringing { display: inline-block; transform-origin: 50% 0; animation: fu-ring 1.2s 0.5s ease-in-out 2; }
+
+/* waiting bar: soft shimmer while the team works */
+.fileup-app .meter__fill--live {
+  background-color: var(--accent);
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 100%);
+  background-size: 200% 100%;
+  animation: fu-shimmer 1.8s linear infinite;
+}
+
+/* solid check icon (submitted, filed): pops, then ripples */
+.fileup-app .stage__icon--solid { position: relative; animation: fu-pop 0.5s 0.15s both; }
+.fileup-app .stage__icon--solid::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: fu-ripple 1.6s 0.5s ease-out 2 both;
+}
+
+/* extracted checks pop when a scan finishes */
+.fileup-app .frow__status--done i,
+.fileup-app .doc__status--done i { display: inline-block; animation: fu-pop 0.45s both; }
+
+/* estimate / final amount cards rise in; the "confirmed" check pops */
+.fileup-app .result--est { animation: fu-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.fileup-app .tag-ok i { display: inline-block; animation: fu-pop 0.45s 0.3s both; }
+
+/* hover polish */
+.fileup-app .btn--primary i { transition: transform 0.2s; }
+.fileup-app .btn--primary:hover i { transform: translateX(3px); }
+.fileup-app .doc--link .ti-chevron-right { transition: transform 0.2s; }
+.fileup-app .doc--link:hover .ti-chevron-right { transform: translateX(3px); }
+.fileup-app .btn:active,
+.fileup-app .send:active,
+.fileup-app .qchip:active { transform: scale(0.97); }
+
+/* wrong-input feedback */
+.fileup-app .shake { animation: fu-shake 0.4s; }
+
+/* ---------- WhatsApp (card, hint, pill, banner, QR dialog) ---------- */
+
+.fileup-app .wa-card {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 14px; padding: 16px 18px;
+  border: 0.5px solid #bfe6d2; border-radius: 18px;
+  background: linear-gradient(135deg, #e8f8ef 0%, #f4fbf7 100%);
+}
+.fileup-app .wa-card__icon {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 13px;
+  background: #d6f3e3; color: #0b7a6b; font-size: 24px;
+}
+.fileup-app .wa-card__body { flex: 1; min-width: 0; }
+.fileup-app .wa-card__title { font-size: 15px; font-weight: 500; color: var(--ink); }
+.fileup-app .wa-card__text { margin-top: 2px; font-size: 13px; line-height: 1.45; color: #3f5f50; }
+
+.fileup-app .wa-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  flex-shrink: 0; height: 44px; padding: 0 18px; border: 0; border-radius: 12px;
+  background: #0b7a6b; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.fileup-app .wa-btn:hover { background: #09695b; }
+.fileup-app .wa-btn:active { transform: scale(0.98); }
+.fileup-app .wa-btn--sm { height: 34px; padding: 0 14px; font-size: 13px; border-radius: 10px; }
+
+.fileup-app .wa-hint {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 12px; padding: 12px 14px;
+  border: 0.5px solid #bfe6d2; border-radius: 14px;
+  background: linear-gradient(135deg, #e8f8ef 0%, #f4fbf7 100%);
+  font-size: 13px; color: #3f5f50;
+}
+.fileup-app .wa-hint > i { color: #0b7a6b; font-size: 20px; flex-shrink: 0; }
+.fileup-app .wa-hint span { flex: 1; min-width: 150px; }
+
+.fileup-app .wa-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+  background: #d6f3e3; color: #0b7a6b; font-size: 11px; font-weight: 500;
+  vertical-align: middle;
+}
+.fileup-app .wa-pill i { font-size: 13px; }
+
+.fileup-app .banner--wa { border-color: #bfe6d2; background: #e8f8ef; color: #15643d; }
+.fileup-app .banner--wa i { color: #0b7a6b; }
+
+.fileup-app .wa-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; place-items: center; padding: 24px;
+  background: rgba(15, 23, 42, 0.45);
+}
+.fileup-app .wa-modal {
+  width: 100%; max-width: 320px; padding: 22px; text-align: center;
+  border-radius: 20px; background: var(--surface);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.25);
+}
+.fileup-app .wa-modal__title { font-size: 16px; font-weight: 500; }
+.fileup-app .wa-modal__text { margin-top: 4px; font-size: 13px; color: var(--muted); }
+.fileup-app .wa-modal__qr { display: block; width: 180px; height: 180px; margin: 16px auto; border-radius: 12px; border: 0.5px solid var(--line); }
+.fileup-app .wa-modal__link { font-size: 12px; color: var(--muted); word-break: break-all; }
+.fileup-app .wa-modal__actions { display: flex; gap: 10px; margin-top: 16px; }
+.fileup-app .wa-modal__actions .wa-btn,
+.fileup-app .wa-modal__actions .btn { flex: 1; }
+
+@media (max-width: 560px) {
+  .fileup-app .tracker__name { display: none; }
+  .fileup-app .tracker__name.is-current-name { display: inline; }
+  .fileup-app .stage__actions { flex-wrap: wrap; }
+  .fileup-app .wa-card { flex-wrap: wrap; }
+  .fileup-app .wa-card__body { flex-basis: calc(100% - 58px); }
+  .fileup-app .wa-card > .wa-btn { width: 100%; }
+}
+
+/* ==========================================================
+   DARK THEME — activated by the `dark` class on <html>.
+   Redefines the token set and patches the few surfaces that
+   hard-code light colors (nav glass, gradients, chips, badges).
+   ========================================================== */
+
+.dark .fileup-app {
+  --bg: #0b1220;
+  --surface: #121d30;
+  --ink: #e7eef7;
+  --muted: #93a4bb;
+  --accent: #22b8dd;
+  --accent-soft: #10303d;
+  --accent-wash: #0e2a36;
+  --row: #16233a;
+  --badge: #1a2740;
+  --line: #26344d;
+  --track: #2a3850;
+  --dash: #2e3e58;
+  --glow: #0e2c38;
+  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-lift: 0 14px 28px rgba(0, 0, 0, 0.5);
+
+  --accent-dark: #1aa0c4;
+  --line-strong: #324663;
+  --subtle: #7f8fa8;
+  --ok-ink: #45cfe8;
+  --warn-ink: #f0b766;
+  --warn-bg: #251d10;
+  --warn-line: #4a3a1c;
+  --warn-chip: #352a14;
+  --gray-dot: #45546d;
+}
+
+/* glass nav over the dark page */
+.dark .fileup-app .nav { background: rgba(18, 29, 48, 0.7); }
+
+/* avatars / note avatars: lift the ink off the dark teal */
+.dark .fileup-app .avatar,
+.dark .fileup-app .note__av { color: #bfe9f5; }
+
+/* banner, dropzone, result gradient, chips, status pills */
+.dark .fileup-app .banner { border-color: #1d4d60; color: #bfe9f5; }
+.dark .fileup-app .dz { background: #0f2330; border-color: #1d4d60; color: var(--muted); }
+.dark .fileup-app .dz:hover { background: #143040; border-color: var(--accent); }
+.dark .fileup-app .consent { color: #c4cfde; }
+.dark .fileup-app .qchip { color: #c4cfde; }
+.dark .fileup-app .qchip:hover { background: #143040; }
+.dark .fileup-app .result { background: linear-gradient(90deg, #10303d 0%, #0f2630 100%); }
+.dark .fileup-app .status--done { background: #13311f; color: #7fe0a6; }
+.dark .fileup-app .segbar__seg.is-now { background: #3f93aa; }
+
+/* WhatsApp surfaces (greens) */
+.dark .fileup-app .wa-card,
+.dark .fileup-app .wa-hint { background: linear-gradient(135deg, #103027 0%, #0e241d 100%); border-color: #1d5345; color: #cdebe0; }
+.dark .fileup-app .wa-card__icon { background: #114234; color: #5fe0c4; }
+.dark .fileup-app .wa-card__title { color: var(--ink); }
+.dark .fileup-app .wa-card__text,
+.dark .fileup-app .wa-hint { color: #a7cfc2; }
+.dark .fileup-app .wa-pill { background: #114234; color: #5fe0c4; }
+.dark .fileup-app .banner--wa { border-color: #1d5345; background: #103027; color: #cdebe0; }
+
+/* estimate / fees / account / coupon / alerts */
+.dark .fileup-app .result__note { color: #a9b7cc; }
+.dark .fileup-app .tag-ai { color: #7fd6ec; }
+.dark .fileup-app .tag-ok { background: #13311f; color: #7fe0a6; }
+.dark .fileup-app .estline { background: #0f2630; }
+.dark .fileup-app .estline__label { color: #a9b7cc; }
+.dark .fileup-app .alert,
+.dark .fileup-app .banner--warn { color: #f0b766; }
+.dark .fileup-app .banner--ok { border-color: #1d5345; background: #103027; color: #7fe0a6; }
+
 @media (prefers-reduced-motion: reduce) {
-  .fileup-app .view { animation: none; }
+  .fileup-app .view > *,
+  .fileup-app .doclist > .doc,
+  .fileup-app .need__item,
+  .fileup-app .stack > .frow,
+  .fileup-app .tracker__dot,
+  .fileup-app .tracker__line.is-done,
+  .fileup-app .segbar__seg,
+  .fileup-app .status,
+  .fileup-app .view > .banner,
+  .fileup-app .banner .ti-bell-ringing,
+  .fileup-app .meter__fill--live,
+  .fileup-app .stage__icon--solid,
+  .fileup-app .stage__icon--solid::after,
+  .fileup-app .frow__status--done i,
+  .fileup-app .doc__status--done i,
+  .fileup-app .result--est,
+  .fileup-app .tag-ok i,
+  .fileup-app .shake { animation: none !important; }
   .fileup-app .doc,
   .fileup-app .dz,
   .fileup-app .qchip,
-  .fileup-app .meter__fill { transition: none; }
+  .fileup-app .meter__fill,
+  .fileup-app .btn--primary i,
+  .fileup-app .doc--link .ti-chevron-right { transition: none; }
   .fileup-app .doc--link:hover { transform: none; }
   .fileup-app .spin { animation: none; }
+  .fileup-app .stage__icon--solid::after { display: none; }
+}
+
+/* ==========================================================
+   Confirm and file (status 4) — the fee is the only thing paid; the income
+   tax is shown for information, and reviewing documents is optional.
+   ========================================================== */
+
+.fileup-app .cf-head { margin: 2px 0 6px; font-size: 22px; font-weight: 500; line-height: 1.3; }
+.fileup-app .cf-sub { margin: 0 0 18px; font-size: 14px; line-height: 1.55; color: var(--muted); }
+
+/* Income tax card (tint) */
+.fileup-app .cf-tax { margin-bottom: 20px; padding: 20px; border-radius: 16px; background: var(--accent-soft); }
+.fileup-app .cf-tax__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.fileup-app .cf-tax__label { font-size: 15px; color: var(--muted); }
+.fileup-app .cf-tax__amount { font-size: 44px; font-weight: 500; line-height: 1.05; color: var(--accent); font-variant-numeric: tabular-nums; }
+.fileup-app .cf-pill {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 999px;
+  background: #ddf4e7; color: #1d7448; font-size: 12px; font-weight: 500; white-space: nowrap;
+}
+.dark .fileup-app .cf-pill { background: #13311f; color: #7fe0a6; }
+
+/* Section row */
+.fileup-app .cf-secrow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.fileup-app .cf-secrow__title { font-size: 15px; font-weight: 500; }
+.fileup-app .cf-secrow__opt { font-size: 12px; color: var(--muted); }
+
+/* Document cards */
+.fileup-app .cf-docs { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.fileup-app .cf-doc {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+  color: var(--ink); font: inherit; cursor: pointer;
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.fileup-app .cf-doc:hover,
+.fileup-app .cf-doc:focus-visible {
+  transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 6px 16px rgba(19, 163, 196, 0.18);
+}
+.fileup-app .cf-doc:active { transform: translateY(-1px); }
+.fileup-app .cf-doc__tile {
+  display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 10px;
+  background: var(--accent-soft); color: var(--accent); transition: background 0.18s, color 0.18s;
+}
+.fileup-app .cf-doc__tile--done { background: #ddf4e7; color: #1d7448; }
+.dark .fileup-app .cf-doc__tile--done { background: #13311f; color: #7fe0a6; }
+.fileup-app .cf-doc__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.fileup-app .cf-doc__title { font-size: 14px; font-weight: 500; }
+.fileup-app .cf-doc__desc { font-size: 12px; color: var(--muted); }
+.fileup-app .cf-review {
+  flex-shrink: 0; padding: 5px 12px; border: 1px solid var(--line-strong); border-radius: 10px;
+  font-size: 12px; font-weight: 500; color: var(--accent);
+}
+.fileup-app .cf-doc:hover .cf-review,
+.fileup-app .cf-doc:focus-visible .cf-review { border-color: var(--accent); }
+.fileup-app .cf-review--done { border-color: transparent; background: #ddf4e7; color: #1d7448; }
+.dark .fileup-app .cf-review--done { background: #13311f; color: #7fe0a6; }
+
+/* Fee card — the one outlined card */
+.fileup-app .cf-fee {
+  display: grid; grid-template-columns: 1fr auto; margin-bottom: 16px;
+  padding: 16px 18px; border: 1.5px solid var(--accent); border-radius: 16px; background: var(--surface);
+}
+.fileup-app .cf-fee__main { grid-column: 1; }
+.fileup-app .cf-fee__label { font-size: 13px; color: var(--muted); }
+.fileup-app .cf-fee__amt { margin-top: 2px; font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.fileup-app .cf-fee__icon {
+  grid-column: 2; align-self: start; display: grid; place-items: center; width: 40px; height: 40px;
+  border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+}
+.fileup-app .cf-fee__line { grid-column: 1 / -1; margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+/* Info row */
+.fileup-app .cf-info { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 18px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.fileup-app .cf-info > i { flex-shrink: 0; margin-top: 1px; color: var(--muted); }
+
+/* Bottom action bar */
+.fileup-app .cf-bar { border-top: 1px solid var(--line); padding-top: 16px; }
+.fileup-app .cf-pay {
+  width: 100%; padding: 13px 16px; border: 0; border-radius: 10px;
+  background: var(--accent); color: #fff; font-size: 15px; font-weight: 500; cursor: pointer;
+  transition: background 0.15s;
+}
+.fileup-app .cf-pay:hover { background: var(--accent-dark); }
+.fileup-app .cf-ask { margin-top: 12px; text-align: center; font-size: 13px; color: var(--muted); }
+.fileup-app .cf-ask__link { border: 0; background: none; padding: 0; font: inherit; font-weight: 500; color: var(--accent); cursor: pointer; }
+.fileup-app .cf-ask__link:hover { text-decoration: underline; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fileup-app .cf-doc { transition: none; }
+  .fileup-app .cf-doc:hover,
+  .fileup-app .cf-doc:focus-visible,
+  .fileup-app .cf-doc:active { transform: none; }
 }
