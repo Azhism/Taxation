@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -15,9 +15,7 @@ import { ThemeProvider } from "./theme";
 import AppLayout from "./fileup/AppLayout";
 import Home from "./fileup/Home";
 import ReturnPage from "./fileup/Dashboard";
-import DocumentsList from "./fileup/DocumentsList";
 import DocumentPage from "./fileup/DocumentPage";
-import Approval from "./fileup/Approval";
 import Payment from "./fileup/Payment";
 import AdminLayout from "./fileup/admin/AdminLayout";
 import AdminHome from "./fileup/admin/AdminHome";
@@ -55,12 +53,14 @@ function App() {
               <Route element={<AppShell />}>
                 <Route path="/dashboard" element={<Home />} />
                 <Route path="/dashboard/return" element={<ReturnPage />} />
-                <Route path="/dashboard/return/documents" element={<DocumentsList />} />
-                <Route path="/dashboard/return/documents/bank-statements" element={<DocumentPage docId="bank" />} />
-                <Route path="/dashboard/return/documents/payslip" element={<DocumentPage docId="pay" />} />
-                <Route path="/dashboard/return/documents/withholding-proofs" element={<DocumentPage docId="wh" />} />
-                <Route path="/dashboard/return/documents/assets" element={<DocumentPage docId="asset" />} />
-                <Route path="/dashboard/return/approval" element={<Approval />} />
+                {/* The documents list and its upload dropdowns live inside the
+                    Upload step; old links land there with the right one open. */}
+                <Route path="/dashboard/return/documents" element={<Navigate to="/dashboard/return" replace />} />
+                <Route path="/dashboard/return/documents/bank-statements" element={<Navigate to="/dashboard/return#bank" replace />} />
+                <Route path="/dashboard/return/documents/payslip" element={<Navigate to="/dashboard/return#pay" replace />} />
+                <Route path="/dashboard/return/documents/withholding-proofs" element={<Navigate to="/dashboard/return#wh" replace />} />
+                <Route path="/dashboard/return/documents/assets" element={<DocumentPage />} />
+                <Route path="/dashboard/return/approval" element={<Navigate to="/dashboard/return" replace />} />
                 <Route path="/dashboard/return/payment" element={<Payment />} />
               </Route>
 

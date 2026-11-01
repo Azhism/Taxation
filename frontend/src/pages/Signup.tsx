@@ -46,7 +46,12 @@ export default function Signup() {
         return;
       }
 
-      // Backend reached but signup failed (e.g. no database) — continue in demo mode.
+      if (res.status < 500) {
+        setError(data.error === "user exists" ? "An account with this email already exists. Log in instead." : data.error || "Sign up failed.");
+        return;
+      }
+
+      // Backend reached but broken (e.g. no database) — continue in demo mode.
       continueAsDemo();
     } catch (err) {
       // Backend unreachable — continue in demo mode so the app stays explorable.

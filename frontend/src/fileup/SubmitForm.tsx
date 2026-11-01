@@ -1,41 +1,30 @@
-/* The submit form (step 3). Shown inline on the dashboard so submitting
-   is a single step, not an intro card followed by a separate page. */
+/* The submit block at the bottom of the Upload step: one consent tick and
+   the Submit button, on the same screen as the documents list. */
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-import { uploadedSummary } from "./shared";
+import { CONFIG, bankReady, needsAttention, payReady, slotFilesOf } from "./shared";
 import { useFileUp } from "./store";
-import { PageTitle, Ti } from "./ui";
+import { Ti } from "./ui";
 
 export default function SubmitForm() {
-  const navigate = useNavigate();
-  const { s, submit, setStage } = useFileUp();
+  const { s, submit } = useFileUp();
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
 
+  const files = slotFilesOf(s);
+  const scanning = files.some((f) => !f.done && !needsAttention(f));
+  const required = bankReady(s) && payReady(s);
+
   function onSubmit() {
-    if (!consent) {
-      setError("Tick the box to submit.");
-      return;
-    }
+    if (scanning) return setError("Wait for your documents to finish uploading.");
+    if (!required && !CONFIG.DEMO_UNLOCK_CONTINUE) return setError("Add your bank statements and payslip first.");
+    if (!consent) return setError("Tick the box to submit.");
     submit();
-    navigate("/dashboard/return");
   }
 
   return (
-    <>
-      <PageTitle title="Submit your documents" sub="We'll read them and work out your estimate straight away." />
-
-      <div className="summary">
-        {uploadedSummary(s).map((x, i) => (
-          <div className="summary__item" key={i}>
-            <Ti name="ti-circle-check" cls="i18 c-accent" />
-            <span>{x.d.title}</span>
-          </div>
-        ))}
-      </div>
-
+    <div className="submit-block">
       <label className="consent">
         <input
           type="checkbox"
@@ -51,22 +40,15 @@ export default function SubmitForm() {
         {error}
       </p>
 
-      <div className="page-actions">
-        <button
-          className="btn btn--secondary"
-          type="button"
-          onClick={() => {
-            setStage(1); // back to the review step (shown on the workflow page)
-            navigate("/dashboard/return");
-          }}
-        >
-          Back
-        </button>
-        <button className="btn btn--primary" type="button" onClick={onSubmit} disabled={!consent}>
-          Submit to FileUp
-          <Ti name="ti-send" cls="i18" />
-        </button>
+      <div className="page-actions page-actions--end">
+        <div className="page-actions__stack">
+          <button className="btn btn--primary" type="button" onClick={onSubmit} disabled={!consent || scanning}>
+            Submit to FileUp
+            <Ti name="ti-send" cls="i18" />
+          </button>
+          {scanning && <span className="hint">Waiting for your documents to finish uploading...</span>}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

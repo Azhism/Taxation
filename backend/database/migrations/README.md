@@ -23,3 +23,4 @@ docker exec -i fileup-postgres psql -U postgres -d tax_filing_db -v ON_ERROR_STO
 | File | What it adds |
 |------|--------------|
 | `001_cases_roles_documents.sql` | User CNIC/phone/role, `tax_cases` with status flow, document typing + case link, `case_notes`, `case_audit_log` |
+| `002_document_extraction.sql` | Extraction status, method, raw text, OCR confidence and page count on `documents` |

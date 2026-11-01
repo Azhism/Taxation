@@ -4,3 +4,10 @@ uploads/
 .env
 *.log
 .DS_Store
+.tesseract-cache/
+
+# Real documents for local testing never go in git; only the fake sample slips do.
+test-fixtures/*
+!test-fixtures/slip-digital.pdf
+!test-fixtures/slip-photo.jpg
+!test-fixtures/slip-scanned.pdf

@@ -114,7 +114,11 @@ export default function HomePanel() {
         name={d.title}
         meta={d.required ? "Required" : "Optional"}
         right={rightFor(d.id, d.required)}
-        onClick={st === 0 ? () => navigate("/dashboard/return/documents/" + d.slug) : undefined}
+        onClick={
+          st === 0
+            ? () => navigate(d.id === "asset" ? "/dashboard/return/documents/" + d.slug : "/dashboard/return#" + d.id)
+            : undefined
+        }
       />
     ));
   } else if (st === 3) {

@@ -14,28 +14,77 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 
 import {
   AMOUNTS,
-  BANKS,
   COUPONS,
   CONFIG,
   FileUpState,
+  UpFile,
+  UploadSlot,
   emptyPayment,
   initialState,
-  bankReady,
-  payReady,
 } from "./shared";
 import { seedAdminCases, type AdminCaseData } from "./admin/adminData";
+import { authToken, fetchExtraction, retryExtraction, uploadDocument, type Extraction } from "./api";
 
 const STORAGE_KEY = "FILEUP_STATE";
 
 function load(): FileUpState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...initialState, ...JSON.parse(raw) };
+    if (raw) {
+      const saved = { ...initialState, ...JSON.parse(raw) } as FileUpState;
+      // Older saves kept withholding proofs as plain names.
+      const wh = saved.wh.files as unknown[];
+      if (wh.some((f) => typeof f === "string")) {
+        saved.wh = {
+          ...saved.wh,
+          files: wh.map((f, i) => (typeof f === "string" ? { id: i + 1, name: f, done: true } : (f as UpFile))),
+        };
+      }
+      return saved;
+    }
   } catch {
     /* ignore corrupt/blocked storage */
   }
   return initialState;
 }
+
+// Applies `update` to the file list of one upload slot. The payslip slot
+// holds a single file, and its status is derived from that file.
+function withSlotFiles(prev: FileUpState, slot: UploadSlot, update: (files: UpFile[]) => UpFile[]): FileUpState {
+  if (slot === "bank") {
+    return { ...prev, bank: { ...prev.bank, files: update(prev.bank.files) as FileUpState["bank"]["files"] } };
+  }
+  if (slot === "wh") {
+    return { ...prev, wh: { ...prev.wh, files: update(prev.wh.files) } };
+  }
+  const file = update(prev.pay.file ? [prev.pay.file] : []).pop();
+  const status = !file
+    ? null
+    : file.done
+      ? "done"
+      : file.status === "needs_password" || file.status === "failed"
+        ? "attention"
+        : "scanning";
+  return { ...prev, pay: { status, file } };
+}
+
+const slotFiles = (s: FileUpState, slot: UploadSlot): UpFile[] =>
+  slot === "bank" ? s.bank.files : slot === "wh" ? s.wh.files : s.pay.file ? [s.pay.file] : [];
+
+// What a finished extraction means for the file row.
+function fromExtraction(e: Extraction): Partial<UpFile> {
+  const status = e.status === "done" ? "done" : e.status === "needs_password" ? "needs_password" : "failed";
+  return {
+    status,
+    done: status === "done",
+    method: e.method,
+    confidence: e.confidence == null ? null : Number(e.confidence),
+    error: e.error,
+  };
+}
+
+const POLL_MS = 1500;
+const POLL_MAX = 240; // ~6 minutes; long scanned PDFs take a while
 
 const REDUCE =
   typeof window !== "undefined" &&
@@ -44,18 +93,15 @@ const REDUCE =
 
 type Store = {
   s: FileUpState;
-  addBank: () => void;
-  setBankConfirmed: (v: boolean) => void;
-  payUpload: () => void;
-  whAdd: () => void;
-  whRemove: (i: number) => void;
+  // Uploads to the backend and tracks extraction; in demo mode (no login)
+  // the files are only listed, never sent.
+  uploadFiles: (slot: UploadSlot, files: File[]) => void;
+  removeFile: (slot: UploadSlot, id: number) => void;
+  unlockFile: (slot: UploadSlot, id: number, password: string) => Promise<void>;
   whNone: () => void;
   assetSend: (text: string) => void;
   assetNone: () => void;
   start: () => void;
-  docsContinue: () => boolean; // returns whether the gate allowed it
-  reviewContinue: () => void;
-  setStage: (n: number) => void;
   submit: () => void;
   approve: (version: number) => void;
   askOpen: () => void;
@@ -67,6 +113,7 @@ type Store = {
   shotRemove: () => void;
   paySubmit: () => void;
   markEstCounted: () => void;
+  finishEstimate: () => void; // the estimate screen finished (or was left early)
   // Admin actions — the "real events" the prototype timers stand in for.
   adminSendForApproval: (final: number, note: string) => void;
   adminVerifyPayment: () => void;
@@ -110,13 +157,52 @@ export function FileUpProvider({ children }: { children: ReactNode }) {
     }
   }, [s]);
 
+  /* ---------- Document uploads ---------- */
+  const patchFile = (slot: UploadSlot, id: number, patch: Partial<UpFile>) =>
+    setS((prev) =>
+      slotFiles(prev, slot).some((f) => f.id === id)
+        ? withSlotFiles(prev, slot, (fs) => fs.map((f) => (f.id === id ? { ...f, ...patch } : f)))
+        : prev,
+    );
+
+  // Polls the backend until extraction finishes, then records the outcome.
+  const pollExtraction = (slot: UploadSlot, id: number, docId: number, attempt = 0) => {
+    const token = authToken();
+    if (!token) return;
+    fetchExtraction(docId, token)
+      .then((e) => {
+        if ((e.status === "pending" || e.status === "processing") && attempt < POLL_MAX) {
+          window.setTimeout(() => pollExtraction(slot, id, docId, attempt + 1), POLL_MS);
+        } else if (e.status === "pending" || e.status === "processing") {
+          patchFile(slot, id, { status: "failed", error: "Reading this file is taking too long." });
+        } else {
+          patchFile(slot, id, fromExtraction(e));
+        }
+      })
+      .catch((err: Error) => patchFile(slot, id, { status: "failed", error: err.message }));
+  };
+
+  // After a reload: keep polling files that were mid-extraction; an upload
+  // that never reached the server can't be resumed.
+  useEffect(() => {
+    (["bank", "pay", "wh"] as UploadSlot[]).forEach((slot) =>
+      slotFiles(s, slot).forEach((f) => {
+        if (f.status !== "scanning") return;
+        if (f.docId) pollExtraction(slot, f.id, f.docId);
+        else patchFile(slot, f.id, { status: "failed", error: "Upload was interrupted. Remove it and try again." });
+      }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /* ---------- Timers (prototype only) ---------- */
   const clearEstimate = () => {
     estTimers.current.forEach((t) => window.clearTimeout(t));
     estTimers.current = [];
   };
 
-  // The instant AI estimate: four visible steps, then the number.
+  // The instant AI estimate. The Step 2 screen (EstimateStep) plays the
+  // reading/calculating sequence and calls finishEstimate when it's done.
   const startEstimate = () => {
     clearEstimate();
     if (REDUCE) {
@@ -124,13 +210,6 @@ export function FileUpProvider({ children }: { children: ReactNode }) {
       return;
     }
     setS((prev) => ({ ...prev, estPhase: 0, estCounted: false }));
-    [1, 2, 3, 4].forEach((p, i) => {
-      estTimers.current.push(
-        window.setTimeout(() => {
-          setS((prev) => (prev.stage === 3 ? { ...prev, estPhase: p } : prev));
-        }, CONFIG.ESTIMATE_STEP_MS * (i + 1)),
-      );
-    });
   };
 
   const promoteToApproval = () =>
@@ -214,7 +293,6 @@ export function FileUpProvider({ children }: { children: ReactNode }) {
       ns = {
         ...ns,
         bank: {
-          confirmed: true,
           files: [
             { id: nextId.current++, bank: "HBL", name: "hbl-statement.pdf", done: true },
             { id: nextId.current++, bank: "Meezan Bank", name: "meezan-statement.pdf", done: true },
@@ -229,40 +307,50 @@ export function FileUpProvider({ children }: { children: ReactNode }) {
   const store: Store = {
     s,
 
-    addBank: () => {
-      const id = nextId.current++;
-      setS((prev) => {
-        const b = BANKS[prev.bankIdx % BANKS.length];
-        const name = b.toLowerCase().replace(/\s/g, "-") + "-statement.pdf";
-        return {
-          ...prev,
-          bankIdx: prev.bankIdx + 1,
-          bank: { confirmed: false, files: [...prev.bank.files, { id, bank: b, name, done: false }] },
-        };
-      });
-      // mocked extraction delay
-      window.setTimeout(() => {
-        setS((prev) => ({
-          ...prev,
-          bank: { ...prev.bank, files: prev.bank.files.map((f) => (f.id === id ? { ...f, done: true } : f)) },
-        }));
-      }, 2200);
+    uploadFiles: (slot, files) => {
+      const token = authToken();
+      // The payslip slot holds one file: only the last one picked counts.
+      for (const file of slot === "pay" ? files.slice(-1) : files) {
+        // Unique across reloads (nextId restarts at 1 each mount).
+        const id = Date.now() * 100 + (nextId.current++ % 100);
+        const entry: UpFile & { bank?: string } = { id, name: file.name, done: false, status: "scanning" };
+        if (slot === "bank") entry.bank = file.name.replace(/\.[^.]+$/, "");
+        setS((prev) => {
+          const ns = withSlotFiles(prev, slot, (fs) => (slot === "pay" ? [entry] : [...fs, entry]));
+          if (slot === "wh") return { ...ns, wh: { ...ns.wh, none: false } };
+          return ns;
+        });
+
+        if (!token) {
+          // Demo mode: mocked extraction delay.
+          window.setTimeout(() => patchFile(slot, id, { done: true, status: "done" }), 2200);
+          continue;
+        }
+        uploadDocument(file, token)
+          .then((docId) => {
+            patchFile(slot, id, { docId });
+            pollExtraction(slot, id, docId);
+          })
+          .catch((err: Error) => patchFile(slot, id, { status: "failed", error: err.message }));
+      }
+    },
+
+    removeFile: (slot, id) => setS((prev) => withSlotFiles(prev, slot, (fs) => fs.filter((f) => f.id !== id))),
+
+    unlockFile: async (slot, id, password) => {
+      const token = authToken();
+      const file = slotFiles(s, slot).find((f) => f.id === id);
+      if (!token || !file?.docId) return;
+      patchFile(slot, id, { status: "scanning", error: null });
+      try {
+        patchFile(slot, id, fromExtraction(await retryExtraction(file.docId, token, password)));
+      } catch (err) {
+        patchFile(slot, id, { status: "failed", error: (err as Error).message });
+      }
     },
 
     start: () => setS((prev) => ({ ...prev, started: true, stage: 0 })),
 
-    setBankConfirmed: (v) => setS((prev) => ({ ...prev, bank: { ...prev.bank, confirmed: v } })),
-
-    payUpload: () => {
-      setS((prev) => ({ ...prev, pay: { status: "scanning" } }));
-      window.setTimeout(() => setS((prev) => ({ ...prev, pay: { status: "done" } })), 2200);
-    },
-
-    whAdd: () =>
-      setS((prev) => ({ ...prev, wh: { none: false, files: [...prev.wh.files, "Tax proof " + (prev.wh.files.length + 1)] } })),
-
-    whRemove: (i) =>
-      setS((prev) => ({ ...prev, wh: { ...prev.wh, files: prev.wh.files.filter((_, idx) => idx !== i) } })),
 
     whNone: () => setS((prev) => ({ ...prev, wh: { ...prev.wh, none: true } })),
 
@@ -297,17 +385,6 @@ export function FileUpProvider({ children }: { children: ReactNode }) {
           ],
         },
       })),
-
-    docsContinue: () => {
-      const ok = (bankReady(s) && payReady(s)) || CONFIG.DEMO_UNLOCK_CONTINUE;
-      if (!ok) return false;
-      setS((prev) => ({ ...prev, stage: Math.max(prev.stage, 1) }));
-      return true;
-    },
-
-    reviewContinue: () => setS((prev) => ({ ...prev, stage: Math.max(prev.stage, 2) })),
-
-    setStage: (n) => setS((prev) => ({ ...prev, stage: Math.max(0, Math.min(7, n)) })),
 
     // Submit: starts the instant AI estimate, then waits for our team.
     submit: () => {
@@ -365,6 +442,11 @@ export function FileUpProvider({ children }: { children: ReactNode }) {
     },
 
     markEstCounted: () => setS((prev) => (prev.estCounted ? prev : { ...prev, estCounted: true })),
+
+    finishEstimate: () =>
+      setS((prev) =>
+        prev.stage === 3 && (prev.estPhase < 4 || !prev.estCounted) ? { ...prev, estPhase: 4, estCounted: true } : prev,
+      ),
 
     // --- Admin actions (drive the same return) ---
 

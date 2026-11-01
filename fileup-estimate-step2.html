@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FileUp · Step 2 Estimate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --t:#1597B8; --td:#0B6F88; --tl:#E8F5FA; --tb:#BFE3EE;
+  --g:#16A34A; --gb:#BFE6CB;
+  --tx:#0F172A; --mu:#64748B; --li:#94A3B8; --bd:#E2E8F0;
+  --page:#F4FAFC; --soft:#F8FCFD;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--tx);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+.page{max-width:760px;margin:0 auto;padding:32px 20px}
+
+/* Stepper */
+.stepper{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:14px}
+.dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0}
+.dot.on{background:var(--t);color:#fff}
+.dot.off{background:#fff;border:1px solid var(--bd);color:var(--li)}
+.line{flex:1;height:2px;background:var(--bd)}
+.line.on{background:var(--t)}
+.lbl-off{color:var(--li)}
+
+/* Card */
+.card{background:#fff;border:1px solid var(--bd);border-radius:20px;padding:24px 28px}
+.head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.spark{width:44px;height:44px;border-radius:12px;background:var(--tl);color:var(--t);display:flex;align-items:center;justify-content:center;font-size:22px}
+.step{font-size:13px;color:var(--mu);margin:0}
+.title{font-size:22px;font-weight:500;margin:0}
+
+/* Docs + stage */
+.wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px}
+.list{display:flex;flex-direction:column;gap:8px}
+.rw{display:flex;align-items:center;gap:12px;border:1px solid var(--bd);border-radius:12px;padding:10px 12px;background:#fff;transition:opacity .4s,border-color .3s,background .3s}
+.rw.dim{opacity:.35}
+.rw.act{border-color:#9ED3E3;background:var(--tl)}
+.rw.done{border-color:var(--gb)}
+.ico{width:38px;height:38px;border-radius:10px;background:#F1F5F9;color:var(--li);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;transition:opacity .2s,background .3s,color .3s}
+.rw.act .ico{opacity:0}
+.rw.done .ico{background:var(--tl);color:var(--t)}
+.nm{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stt{font-size:13px;color:var(--li);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.rw.act .stt{color:var(--td)}
+.rw.done .stt{color:var(--g)}
+.ok{width:20px;height:20px;border-radius:50%;background:var(--g);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;transform:scale(0);transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.rw.done .ok{transform:scale(1)}
+
+.stage{position:relative;border-radius:12px;background:var(--soft);border:1px dashed #D5EAF1;min-height:220px}
+.fc{position:absolute;left:50%;top:50%;width:200px;height:130px;margin:-65px 0 0 -100px;border-radius:16px;border:1px solid #9ED3E3;background:var(--tl);box-shadow:0 12px 30px rgba(21,151,184,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;overflow:hidden;opacity:0;z-index:5}
+.fc i{font-size:36px;color:var(--t)}
+.fc .n{font-size:15px;color:var(--mu)}
+.fc .s{font-size:14px;color:var(--td)}
+.fc .bar{position:absolute;left:0;right:0;top:0;height:2.5px;background:var(--t);opacity:0}
+.fc.scan .bar{opacity:1;animation:scan 1s ease-in-out infinite alternate}
+@keyframes scan{from{top:0}to{top:calc(100% - 3px)}}
+.cap{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:13px;color:var(--li);display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .3s;padding:0 12px}
+
+/* Ledger dropdown */
+.lg{background:var(--soft);border:1px solid #E3F1F6;border-radius:12px;margin-top:16px}
+.lgh{display:flex;align-items:center;gap:6px;padding:10px 14px;font-size:12px;color:var(--td);background:var(--soft);border-radius:12px;user-select:none;transition:background .2s}
+.lgh .chev{margin-left:auto;font-size:18px;color:var(--mu);opacity:0;transition:transform .3s,opacity .3s}
+.lg.ready .lgh{cursor:pointer;font-size:14px}
+.lg.ready .lgh:hover{background:#EEF7FA}
+.lg.ready .lgh .chev{opacity:1}
+.lg.open .lgh .chev{transform:rotate(180deg)}
+.lgh:focus-visible{outline:2px solid #9ED3E3;outline-offset:2px}
+.lgb{overflow:hidden;padding:0 14px;transition:max-height .5s ease,opacity .35s}
+.ln{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:7px 0;border-bottom:1px dashed #D5EAF1;animation:in .4s ease both}
+.ln span:first-child{color:var(--mu)}
+
+/* Estimate */
+.est{border-radius:16px;padding:18px 20px;margin-top:16px;background:var(--soft);border:1px dashed #D5EAF1;transition:background .5s,border-color .5s}
+.est.ready{background:var(--tl);border:1px solid var(--tb)}
+.est-top{display:flex;justify-content:space-between;align-items:center}
+.estl{font-size:14px;color:var(--li)}
+.pill{font-size:12px;background:#fff;color:var(--td);padding:3px 12px;border-radius:99px;border:1px solid var(--tb);opacity:0;transition:opacity .4s}
+.big{font-size:36px;font-weight:500;color:var(--t);margin:4px 0 12px;font-variant-numeric:tabular-nums}
+.brk{border-top:1px solid #CDE9F2;padding-top:8px}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:4px 0;color:var(--mu)}
+.row span:last-child{color:var(--tx)}
+
+/* Tip */
+.tip{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:12px 14px;border-radius:12px;background:#FFF9EC}
+.tip i{color:#B7791F;font-size:19px}
+.tip p{font-size:14px;color:#7A5410;margin:0;transition:opacity .3s}
+
+/* After */
+.note{font-size:13px;color:var(--li);margin:10px 0 16px}
+.confirm{display:flex;align-items:center;gap:10px;font-size:15px}
+.foot{border-top:1px solid var(--bd);margin-top:16px;padding-top:16px}
+.foot p{font-size:14px;color:var(--mu);margin:0 0 12px}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.btn-wa{background:var(--t);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;transition:background .2s}
+.btn-wa:hover{background:var(--td)}
+.btn-ghost{background:transparent;color:var(--mu);border:none;padding:11px 8px;font-size:14px}
+.btn-ghost:hover{color:var(--tx)}
+button:focus-visible{outline:2px solid #9ED3E3;outline-offset:2px}
+
+/* Shared */
+.shim{height:12px;border-radius:6px;background:linear-gradient(90deg,#DDEFF5,#F1F9FC,#DDEFF5);background-size:200% 100%;animation:sh 1.2s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--bd);border-top-color:var(--t);animation:sp .8s linear infinite;flex-shrink:0}
+.spin.sm{width:12px;height:12px;border-width:1.5px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.fade{animation:in .5s ease both}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.hidden{display:none}
+
+@media (max-width:640px){
+  .card{padding:20px 16px}
+  .wrap{grid-template-columns:1fr}
+  .stage{order:-1;min-height:180px}
+  .stepper span{display:none}
+  .big{font-size:30px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<main class="page">
+
+  <div class="stepper">
+    <div class="dot on"><i class="ti ti-check"></i></div><span>Upload</span>
+    <div class="line on"></div>
+    <div class="dot on">2</div><span style="font-weight:500">Estimate</span>
+    <div class="line"></div>
+    <div class="dot off">3</div><span class="lbl-off">Approve</span>
+    <div class="line"></div>
+    <div class="dot off">4</div><span class="lbl-off">File</span>
+  </div>
+
+  <section class="card">
+    <div class="head">
+      <div class="spark"><i class="ti ti-sparkles" aria-hidden="true"></i></div>
+      <div>
+        <p class="step">Step 2 of 4</p>
+        <h1 class="title" id="hd" aria-live="polite">We're working out your estimate</h1>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="list" id="list"></div>
+      <div class="stage" id="stage">
+        <div class="cap" id="cap">Getting your documents ready…</div>
+        <div class="fc" id="fc" aria-hidden="true">
+          <div class="bar"></div>
+          <i id="fci" class="ti ti-file-text"></i>
+          <div class="n" id="fcn"></div>
+          <div class="s">Reading…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lg" id="lg">
+      <div class="lgh" id="lgh" role="button" tabindex="0" aria-expanded="true" aria-controls="lgb">
+        <span id="lgt">What we've found so far</span><span id="lgc" style="color:var(--li)"></span>
+        <i class="ti ti-chevron-down chev" aria-hidden="true"></i>
+      </div>
+      <div class="lgb" id="lgb">
+        <div id="ledger" style="padding-bottom:10px"><div style="padding:8px 0"><div class="shim" style="width:70%"></div></div></div>
+      </div>
+    </div>
+
+    <div class="est" id="est">
+      <div class="est-top">
+        <span class="estl" id="estl">Your estimate will appear here</span>
+        <span class="pill" id="pill">AI estimate</span>
+      </div>
+      <div id="estbody">
+        <div style="padding:14px 0 6px"><div class="shim" style="width:45%;height:24px"></div></div>
+        <div class="shim" style="width:80%;margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="tip" id="tipbox">
+      <i class="ti ti-bulb" aria-hidden="true"></i>
+      <p id="tip"></p>
+    </div>
+
+    <div id="after" class="hidden">
+      <p class="note">Not final. Our team will confirm it by <span id="eta">tomorrow, 6 PM</span>.</p>
+      <div class="confirm"><div class="spin"></div>Our team is confirming it</div>
+      <div class="foot">
+        <p>We'll message you on WhatsApp as soon as it's confirmed.</p>
+        <div class="actions">
+          <button class="btn-wa" type="button"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Chat on WhatsApp</button>
+          <button class="btn-ghost" type="button">Back to dashboard</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* Demo data. Replace with real extraction results per document. */
+const DOCS = [
+  { name: "Payslip",          icon: "ti-file-text",     find: [["Monthly salary","PKR 200,000"],["Tax cut by employer (so far)","PKR 96,000"]] },
+  { name: "HBL statement",    icon: "ti-building-bank", find: [["Profit on savings","PKR 63,300"],["Tax already cut on profit","PKR 9,500"]] },
+  { name: "Meezan statement", icon: "ti-building-bank", find: [["Account activity","Checked"]] },
+  { name: "Phone bills",      icon: "ti-device-mobile", find: [["Phone tax (adjustable)","PKR 2,500"]] }
+];
+const TIPS = [
+  "The tax your employer cuts every month already counts toward your yearly total.",
+  "Tax already cut on your bank profit counts toward what you owe.",
+  "Being on the Active Taxpayer List usually means lower tax on bank profit.",
+  "Tax deducted on your mobile bills can be adjusted against what you owe."
+];
+const RESULT = {
+  label: "Remaining tax to pay",       /* use "Refund due" when negative */
+  amount: 18500,
+  rows: [["Taxable income","PKR 2,400,000"],["Total tax for the year","PKR 126,500"],["Already deducted (salary, bank, phone)","− PKR 108,000"]]
+};
+
+const $ = id => document.getElementById(id);
+const fmt = n => "PKR " + Math.round(n).toLocaleString("en-US");
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const EASE = "transform .6s cubic-bezier(.2,.8,.2,1), opacity .25s";
+
+/* Build rows */
+$("list").innerHTML = DOCS.map((d,i) => `
+  <div class="rw" id="r${i}">
+    <div class="ico"><i class="ti ${d.icon}" aria-hidden="true"></i></div>
+    <div class="nm">${d.name}</div>
+    <div class="stt"><span class="tx">Waiting</span><span class="ok"><i class="ti ti-check"></i></span></div>
+  </div>`).join("");
+$("tip").textContent = TIPS[0];
+
+const setStatus = (i, html) => $("r"+i).querySelector(".tx").innerHTML = html;
+
+function iconTransform(i){
+  const fc = $("fc");
+  fc.style.transition = "none"; fc.style.transform = "none";
+  const a = fc.getBoundingClientRect();
+  const b = $("r"+i).querySelector(".ico").getBoundingClientRect();
+  const dx = (b.left + b.width/2) - (a.left + a.width/2);
+  const dy = (b.top + b.height/2) - (a.top + a.height/2);
+  return `translate(${dx}px,${dy}px) scale(${b.width/a.width})`;
+}
+
+async function zoomIn(i){
+  const fc = $("fc"), d = DOCS[i];
+  $("fci").className = "ti " + d.icon; $("fcn").textContent = d.name;
+  fc.style.transform = iconTransform(i); fc.style.opacity = 1; fc.offsetWidth;
+  DOCS.forEach((_,k) => $("r"+k).classList.toggle("dim", k !== i));
+  $("r"+i).classList.add("act");
+  setStatus(i, '<span class="spin sm" style="display:inline-block;vertical-align:-1px"></span> Reading');
+  $("cap").style.opacity = 0;
+  fc.style.transition = EASE; fc.style.transform = "none";
+  const tip = $("tip"); tip.style.opacity = 0;
+  setTimeout(() => { tip.textContent = TIPS[i % TIPS.length]; tip.style.opacity = 1; }, 300);
+  await wait(450); fc.classList.add("scan");
+}
+
+async function zoomOut(i){
+  const fc = $("fc");
+  fc.classList.remove("scan");
+  const to = iconTransform(i);
+  fc.style.transform = "none"; fc.offsetWidth;
+  fc.style.transition = EASE; fc.style.transform = to;
+  await wait(550);
+  fc.style.opacity = 0;
+  const r = $("r"+i); r.classList.remove("act"); r.classList.add("done");
+  setStatus(i, "Done");
+  DOCS.forEach((_,k) => $("r"+k).classList.remove("dim"));
+}
+
+let firstRow = true, count = 0;
+function addLedger(label, value){
+  if (firstRow){ $("ledger").innerHTML = ""; firstRow = false; }
+  const el = document.createElement("div");
+  el.className = "ln";
+  el.innerHTML = `<span>${label}</span><span>${value}</span>`;
+  $("ledger").appendChild(el); count++;
+}
+
+function setLedger(open){
+  const b = $("lgb"), lg = $("lg");
+  b.style.maxHeight = b.scrollHeight + "px"; b.offsetHeight;
+  if (open){ lg.classList.add("open"); b.style.opacity = 1; }
+  else { b.style.maxHeight = "0px"; b.style.opacity = 0; lg.classList.remove("open"); }
+  $("lgh").setAttribute("aria-expanded", open ? "true" : "false");
+}
+function toggleLedger(){ if ($("lg").classList.contains("ready")) setLedger(!$("lg").classList.contains("open")); }
+$("lgh").addEventListener("click", toggleLedger);
+$("lgh").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleLedger(); } });
+
+function countUp(el, end, ms){
+  const start = performance.now();
+  (function f(now){
+    const p = Math.min((now - start)/ms, 1);
+    el.textContent = fmt(end * p);
+    if (p < 1) requestAnimationFrame(f);
+  })(start);
+}
+
+async function run(){
+  await wait(600);
+  for (let i = 0; i < DOCS.length; i++){
+    await zoomIn(i);
+    await wait(550);
+    for (const [l,v] of DOCS[i].find){ addLedger(l, v); await wait(550); }
+    await wait(400);
+    await zoomOut(i);
+    await wait(350);
+  }
+
+  $("cap").innerHTML = '<span class="spin"></span>Calculating your tax for the year…';
+  $("cap").style.color = "var(--td)"; $("cap").style.opacity = 1;
+  $("estl").textContent = "Calculating…"; $("estl").style.color = "var(--td)";
+  await wait(1600);
+
+  $("hd").textContent = "Your estimate is ready";
+  $("cap").innerHTML = `<i class="ti ti-circle-check" style="font-size:32px;color:var(--g)"></i>All ${DOCS.length} documents read`;
+  $("est").classList.add("ready");
+  $("estl").textContent = RESULT.label;
+  $("pill").style.opacity = 1;
+  $("estbody").innerHTML = `<p class="big" id="big">PKR 0</p>
+    <div class="brk fade">${RESULT.rows.map(([l,v]) => `<div class="row"><span>${l}</span><span>${v}</span></div>`).join("")}</div>`;
+  countUp($("big"), RESULT.amount, 800);
+  $("tipbox").classList.add("hidden");
+  const after = $("after"); after.classList.remove("hidden"); after.classList.add("fade"); after.style.animationDelay = ".5s";
+
+  await wait(1000);
+  $("lg").classList.add("ready");
+  $("lgt").innerHTML = '<span style="color:var(--tx)">What we found</span>';
+  $("lgc").textContent = " · " + count + " items";
+  setLedger(false);
+}
+
+run();
+</script>
+</body>
+</html>

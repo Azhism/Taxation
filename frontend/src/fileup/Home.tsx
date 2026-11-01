@@ -5,7 +5,7 @@
 import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { AMOUNTS, STEP_TITLES, TRACKER, TRACKER_INDEX, feeDue, money } from "./shared";
+import { AMOUNTS, STEP_COUNT, STEP_NUMBER, STEP_TITLES, TRACKER, TRACKER_INDEX, feeDue, money } from "./shared";
 import { useFileUp } from "./store";
 import HomePanel from "./HomePanel";
 import { WhatsAppCard } from "./whatsapp";
@@ -65,7 +65,7 @@ export default function Home() {
   } else if (st <= 2) {
     pill = "In progress";
     pillClass += " status--active";
-    text = "Step " + (st + 1) + " of 5: " + STEP_TITLES[st];
+    text = "Step " + STEP_NUMBER[st] + " of " + STEP_COUNT + ": " + STEP_TITLES[st];
     button = primary("Continue", "/dashboard/return");
   } else if (st === 3) {
     const ready = s.estPhase >= 4;
@@ -89,7 +89,7 @@ export default function Home() {
     pill = "Needs your approval";
     pillClass += " status--attention";
     text = "Our team has prepared your return. Review it and let us know if we can file.";
-    button = primary("Review and approve", "/dashboard/return/approval");
+    button = primary("Review and approve", "/dashboard/return");
   } else if (st === 5) {
     pill = s.payment.rejected ? "Payment not verified" : "Payment needed";
     pillClass += " status--attention";

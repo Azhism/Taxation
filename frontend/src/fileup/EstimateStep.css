@@ -1,0 +1,192 @@
+/* Step 2 "Estimate" screen. Values follow the reference design
+   (fileup-estimate-step2.html); everything is scoped under .est2. */
+
+.fileup-app .est2 {
+  --e-t: #1597b8; --e-td: #0b6f88; --e-tl: #e8f5fa; --e-tb: #bfe3ee;
+  --e-g: #16a34a; --e-gb: #bfe6cb;
+  --e-tx: #0f172a; --e-mu: #64748b; --e-li: #94a3b8; --e-bd: #e2e8f0;
+  --e-soft: #f8fcfd; --e-card: #fff; --e-ico: #f1f5f9; --e-dash: #d5eaf1;
+  --e-act: #9ed3e3; --e-lgline: #e3f1f6; --e-brk: #cde9f2;
+  --e-tipbg: #fff9ec; --e-tipic: #b7791f; --e-tiptx: #7a5410;
+}
+.dark .fileup-app .est2 {
+  --e-tl: #0f2a35; --e-tb: #1f5568; --e-gb: #1d5a34;
+  --e-tx: #e7eef7; --e-mu: #9aabc0; --e-li: #7f8fa8; --e-bd: #26344d;
+  --e-soft: #12202f; --e-card: #16233a; --e-ico: #1c2b42; --e-dash: #23435a;
+  --e-act: #2a6a80; --e-lgline: #1f3346; --e-brk: #1f4556;
+  --e-tipbg: #2a2214; --e-tipic: #f0b766; --e-tiptx: #f3d7a6;
+}
+
+/* header */
+.fileup-app .est2__head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.fileup-app .est2__spark {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--e-tl); color: var(--e-t); font-size: 22px;
+}
+.fileup-app .est2__step { margin: 0; font-size: 13px; color: var(--e-mu); }
+.fileup-app .est2__title { margin: 0; font-size: 22px; font-weight: 500; color: var(--e-tx); }
+
+/* documents + stage */
+.fileup-app .est2__wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; }
+/* rows sit centred against the stage, however many documents there are */
+.fileup-app .est2__list { display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.fileup-app .est2__row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  border: 1px solid var(--e-bd); border-radius: 12px; background: var(--e-card);
+  transition: opacity 0.4s, border-color 0.3s, background 0.3s;
+}
+.fileup-app .est2__row.is-dim { opacity: 0.35; }
+.fileup-app .est2__row.is-act { border-color: var(--e-act); background: var(--e-tl); }
+.fileup-app .est2__row.is-done { border-color: var(--e-gb); }
+.fileup-app .est2__ico {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--e-ico); color: var(--e-li); font-size: 20px;
+  transition: opacity 0.2s, background 0.3s, color 0.3s;
+}
+.fileup-app .est2__row.is-act .est2__ico { opacity: 0; }
+.fileup-app .est2__row.is-done .est2__ico { background: var(--e-tl); color: var(--e-t); }
+.fileup-app .est2__nm {
+  flex: 1; min-width: 0; font-size: 14px; color: var(--e-tx);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fileup-app .est2__stt { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--e-li); white-space: nowrap; }
+.fileup-app .est2__row.is-act .est2__stt { color: var(--e-td); }
+.fileup-app .est2__row.is-done .est2__stt { color: var(--e-g); }
+.fileup-app .est2__ok {
+  display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--e-g); color: #fff; font-size: 13px;
+  transform: scale(0); transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.fileup-app .est2__row.is-done .est2__ok { transform: scale(1); }
+
+.fileup-app .est2__stage {
+  position: relative; min-height: 220px; border-radius: 12px;
+  background: var(--e-soft); border: 1px dashed var(--e-dash);
+}
+.fileup-app .est2__fc {
+  position: absolute; left: 50%; top: 50%; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  width: 200px; height: 130px; margin: -65px 0 0 -100px; overflow: hidden;
+  border: 1px solid var(--e-act); border-radius: 16px; background: var(--e-tl);
+  box-shadow: 0 12px 30px rgba(21, 151, 184, 0.18); opacity: 0;
+}
+.fileup-app .est2__fc > i { font-size: 36px; color: var(--e-t); }
+.fileup-app .est2__fcn { font-size: 15px; color: var(--e-mu); }
+.fileup-app .est2__fcs { font-size: 14px; color: var(--e-td); }
+.fileup-app .est2__bar { position: absolute; left: 0; right: 0; top: 0; height: 2.5px; background: var(--e-t); opacity: 0; }
+.fileup-app .est2__fc.is-scan .est2__bar { opacity: 1; animation: est2-scan 1s ease-in-out infinite alternate; }
+@keyframes est2-scan { from { top: 0; } to { top: calc(100% - 3px); } }
+.fileup-app .est2__cap {
+  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 0 12px; text-align: center; font-size: 13px; color: var(--e-li);
+  transition: opacity 0.3s;
+}
+.fileup-app .est2__cap.is-calc { color: var(--e-td); }
+.fileup-app .est2__allok { font-size: 32px; color: var(--e-g); }
+
+/* ledger dropdown */
+.fileup-app .est2__lg { margin-top: 16px; background: var(--e-soft); border: 1px solid var(--e-lgline); border-radius: 12px; }
+.fileup-app .est2__lgh {
+  display: flex; align-items: center; gap: 6px; padding: 10px 14px;
+  border-radius: 12px; background: var(--e-soft); font-size: 12px; color: var(--e-td);
+  user-select: none; transition: background 0.2s;
+}
+.fileup-app .est2__chev { margin-left: auto; font-size: 18px; color: var(--e-mu); opacity: 0; transition: transform 0.3s, opacity 0.3s; }
+.fileup-app .est2__lg.is-ready .est2__lgh { cursor: pointer; font-size: 14px; }
+.fileup-app .est2__lg.is-ready .est2__lgh:hover { background: #eef7fa; }
+.dark .fileup-app .est2__lg.is-ready .est2__lgh:hover { background: #172a3b; }
+.fileup-app .est2__lg.is-ready .est2__chev { opacity: 1; }
+.fileup-app .est2__lg.is-open .est2__chev { transform: rotate(180deg); }
+.fileup-app .est2__lgh:focus-visible { outline: 2px solid var(--e-act); outline-offset: 2px; }
+.fileup-app .est2__lgt { color: var(--e-tx); }
+.fileup-app .est2__lgc { color: var(--e-li); }
+.fileup-app .est2__lgb { overflow: hidden; padding: 0 14px; transition: max-height 0.5s ease, opacity 0.35s; }
+.fileup-app .est2__ledger { padding-bottom: 10px; }
+.fileup-app .est2__ln {
+  display: flex; justify-content: space-between; gap: 12px; padding: 7px 0;
+  border-bottom: 1px dashed var(--e-dash); font-size: 14px; color: var(--e-tx);
+}
+.fileup-app .est2__ln.is-new { animation: est2-in 0.4s ease both; }
+.fileup-app .est2__ln span:first-child { color: var(--e-mu); }
+
+/* estimate card */
+.fileup-app .est2__est {
+  margin-top: 16px; padding: 18px 20px; border-radius: 16px;
+  background: var(--e-soft); border: 1px dashed var(--e-dash);
+  transition: background 0.5s, border-color 0.5s;
+}
+.fileup-app .est2__est.is-ready { background: var(--e-tl); border: 1px solid var(--e-tb); }
+.fileup-app .est2__est-top { display: flex; justify-content: space-between; align-items: center; }
+.fileup-app .est2__estl { font-size: 14px; color: var(--e-li); }
+.fileup-app .est2__estl.is-calc { color: var(--e-td); }
+.fileup-app .est2__est.is-ready .est2__estl { color: var(--e-mu); }
+.fileup-app .est2__pill {
+  padding: 3px 12px; border-radius: 99px; border: 1px solid var(--e-tb);
+  background: var(--e-card); color: var(--e-td); font-size: 12px; transition: opacity 0.4s;
+}
+.fileup-app .est2__big { margin: 4px 0 12px; font-size: 36px; font-weight: 500; color: var(--e-t); font-variant-numeric: tabular-nums; }
+.fileup-app .est2__brk { border-top: 1px solid var(--e-brk); padding-top: 8px; }
+.fileup-app .est2__brow { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; color: var(--e-mu); }
+.fileup-app .est2__brow span:last-child { color: var(--e-tx); white-space: nowrap; }
+.fileup-app .est2__ln span:last-child { white-space: nowrap; }
+
+/* tip */
+.fileup-app .est2__tip { display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; padding: 12px 14px; border-radius: 12px; background: var(--e-tipbg); }
+.fileup-app .est2__tip > i { font-size: 19px; color: var(--e-tipic); }
+.fileup-app .est2__tip p { margin: 0; font-size: 14px; color: var(--e-tiptx); transition: opacity 0.3s; }
+
+/* after the result */
+.fileup-app .est2__note { margin: 10px 0 16px; font-size: 13px; color: var(--e-li); }
+.fileup-app .est2__confirm { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--e-tx); }
+.fileup-app .est2__foot { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--e-bd); }
+.fileup-app .est2__foot p { margin: 0 0 12px; font-size: 14px; color: var(--e-mu); }
+.fileup-app .est2__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.fileup-app .est2__btn-wa {
+  display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px;
+  border: none; border-radius: 10px; background: #0b7a6b; color: #fff; /* same green as Open WhatsApp */
+  font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s;
+}
+.fileup-app .est2__btn-wa:hover { background: #09695b; }
+.fileup-app .est2__btn-ghost {
+  padding: 11px 8px; border: none; background: transparent; color: var(--e-mu);
+  font: inherit; font-size: 14px; cursor: pointer;
+}
+.fileup-app .est2__btn-ghost:hover { color: var(--e-tx); }
+.fileup-app .est2__btn-wa:focus-visible,
+.fileup-app .est2__btn-ghost:focus-visible { outline: 2px solid var(--e-act); outline-offset: 2px; }
+
+/* shared */
+.fileup-app .est2__shim {
+  height: 12px; border-radius: 6px;
+  background: linear-gradient(90deg, #ddeff5, #f1f9fc, #ddeff5); background-size: 200% 100%;
+  animation: est2-sh 1.2s linear infinite;
+}
+.dark .fileup-app .est2__shim { background-image: linear-gradient(90deg, #1b3344, #234356, #1b3344); }
+@keyframes est2-sh { to { background-position: -200% 0; } }
+.fileup-app .est2__spin {
+  flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--e-bd); border-top-color: var(--e-t);
+  animation: est2-sp 0.8s linear infinite;
+}
+.fileup-app .est2__spin--sm { width: 12px; height: 12px; border-width: 1.5px; }
+@keyframes est2-sp { to { transform: rotate(360deg); } }
+.fileup-app .est2__fade { animation: est2-in 0.5s ease both; }
+.fileup-app .est2__fade--late { animation-delay: 0.5s; }
+@keyframes est2-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 640px) {
+  .fileup-app .est2__wrap { grid-template-columns: 1fr; }
+  .fileup-app .est2__stage { order: -1; min-height: 180px; }
+  .fileup-app .est2__big { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fileup-app .est2 *,
+  .fileup-app .est2 *::before,
+  .fileup-app .est2 *::after {
+    animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important;
+  }
+}

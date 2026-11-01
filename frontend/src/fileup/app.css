@@ -33,6 +33,10 @@
   --warn-line: #f0d29a;
   --warn-chip: #fdf0d5;
   --gray-dot: #cbd5e1;
+  /* "this document is in" green: a small solid badge + the Uploaded label,
+     never buttons or tinted boxes (so it never reads as the WhatsApp box). */
+  --done: #16a34a;
+  --done-ink: #15803d;
 
   font-family: var(--font);
   font-size: 16px;
@@ -260,6 +264,53 @@
 /* documents list */
 .fileup-app .docs-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
 .fileup-app .docs-count { font-size: 13px; color: var(--muted); }
+.fileup-app .docs-head__title { font-size: 16px; font-weight: 500; }
+
+/* Pay step: Review on the left, Pay now on the right; the review opens in the card */
+.fileup-app .stage__split { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; }
+
+/* payment screenshot row: same look as a document row, one Upload button */
+.fileup-app .pay-shot { margin-bottom: 4px; }
+
+/* document dropdowns on the Upload step */
+.fileup-app .dacc {
+  border: 0.5px solid var(--line); border-radius: 14px; background: var(--surface);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.fileup-app .dacc:hover,
+.fileup-app .dacc.is-open { border-color: var(--accent); }
+.fileup-app .dacc.is-open { box-shadow: 0 8px 20px rgba(20, 130, 165, 0.1); }
+.fileup-app .dacc__head { display: flex; align-items: center; gap: 10px; padding: 12px 8px 12px 14px; }
+.fileup-app .dacc__toggle {
+  display: flex; flex: 1; min-width: 0; align-items: center; gap: 12px;
+  padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.fileup-app .dacc__toggle .doc__name,
+.fileup-app .dacc__toggle .doc__meta { display: block; }
+.fileup-app .dacc__chevbtn {
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0;
+  border: 0; border-radius: 8px; background: none; cursor: pointer;
+}
+.fileup-app .dacc__chevbtn:hover { background: var(--row); }
+.fileup-app .dacc__error { margin: -4px 14px 10px; }
+/* uploaded: the document icon stays, a small green tick badge sits on its corner */
+.fileup-app .doc__icon.doc__icon--ok { position: relative; }
+.fileup-app .doc__badge {
+  position: absolute; right: -5px; bottom: -5px;
+  display: grid; place-items: center; width: 18px; height: 18px;
+  border: 2px solid var(--surface); border-radius: 50%;
+  background: var(--done); color: #fff; font-size: 11px;
+  animation: fu-pop 0.45s both;
+}
+.fileup-app .dacc__chev { flex-shrink: 0; transition: transform 0.2s; }
+.fileup-app .dacc.is-open .dacc__chev { transform: rotate(180deg); }
+.fileup-app .dacc__body { padding: 2px 14px 14px; }
+.fileup-app .dacc__body .dz:not(.dz--sm) { padding: 18px; }
+.fileup-app .dacc__body .stack + .dz { margin-top: 10px; }
+.fileup-app .dacc__hint { margin-bottom: 10px; font-size: 13px; color: var(--muted); }
+.fileup-app .dacc__actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+.fileup-app .submit-block { margin-top: 22px; padding-top: 18px; border-top: 0.5px solid var(--line); }
 .fileup-app .doclist { display: flex; flex-direction: column; gap: 10px; }
 .fileup-app .doc {
   display: flex; align-items: center; gap: 12px;
@@ -315,6 +366,26 @@
 .fileup-app .frow__status { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--muted); }
 .fileup-app .frow__status--done { color: var(--ok-ink); }
 .fileup-app .frow__x { border: 0; background: none; padding: 0 0 0 6px; color: var(--subtle); cursor: pointer; }
+.fileup-app .frow__status--warn { color: var(--warn-ink); }
+.fileup-app .frow__status--done { color: var(--done-ink); }
+
+/* uploading: a ring chases round, a thin bar sweeps under the row */
+.fileup-app .frow__status--busy { gap: 6px; color: var(--accent); }
+.fileup-app .upring { width: 16px; height: 16px; animation: fileup-spin 0.8s linear infinite; }
+.fileup-app .upring circle { fill: none; stroke-width: 2.5; }
+.fileup-app .upring__track { stroke: var(--line-strong); }
+.fileup-app .upring__arc { stroke: var(--accent); stroke-linecap: round; stroke-dasharray: 16 50.3; }
+.fileup-app .frow--busy { position: relative; overflow: hidden; }
+.fileup-app .frow--busy::after {
+  content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 40%;
+  border-radius: 2px; background: var(--accent);
+  animation: fu-sweep 1.1s ease-in-out infinite;
+}
+@keyframes fu-sweep { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+.fileup-app .frow__unlock { display: flex; gap: 8px; margin: -2px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--warn-bg); border: 0.5px solid var(--warn-line); }
+.fileup-app .frow__unlock .input { flex: 1; height: 32px; }
+.fileup-app .dz--over { background: #e8f5fa; border-color: var(--accent); }
+.fileup-app .dz__demo { margin-top: 8px; font-size: 12px; color: var(--muted); }
 .fileup-app .stack { display: flex; flex-direction: column; gap: 8px; }
 
 .fileup-app .consent { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 6px; font-size: 13px; line-height: 1.45; color: #334155; cursor: pointer; }
@@ -689,6 +760,8 @@
   --warn-bg: #251d10;
   --warn-line: #4a3a1c;
   --warn-chip: #352a14;
+  --done: #22c55e;
+  --done-ink: #4ade80;
   --gray-dot: #45546d;
 }
 
@@ -702,7 +775,8 @@
 /* banner, dropzone, result gradient, chips, status pills */
 .dark .fileup-app .banner { border-color: #1d4d60; color: #bfe9f5; }
 .dark .fileup-app .dz { background: #0f2330; border-color: #1d4d60; color: var(--muted); }
-.dark .fileup-app .dz:hover { background: #143040; border-color: var(--accent); }
+.dark .fileup-app .dz:hover,
+.dark .fileup-app .dz--over { background: #143040; border-color: var(--accent); }
 .dark .fileup-app .consent { color: #c4cfde; }
 .dark .fileup-app .qchip { color: #c4cfde; }
 .dark .fileup-app .qchip:hover { background: #143040; }
@@ -845,7 +919,62 @@
 .fileup-app .cf-ask__link { border: 0; background: none; padding: 0; font: inherit; font-weight: 500; color: var(--accent); cursor: pointer; }
 .fileup-app .cf-ask__link:hover { text-decoration: underline; }
 
+/* approve screen: tax card details */
+.fileup-app .cf-tax__amount { font-size: 34px; }
+.fileup-app .cf-diff { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.fileup-app .cf-brk { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(20, 130, 165, 0.15); }
+.fileup-app .cf-brk__row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; font-size: 13px; color: var(--muted); }
+.fileup-app .cf-brk__row span:last-child { color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fileup-app .cf-psid {
+  display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0; padding: 8px 12px;
+  border-radius: 10px; background: var(--surface); font-size: 12px; line-height: 1.45; color: var(--muted);
+}
+.fileup-app .cf-psid > i { flex-shrink: 0; margin-top: 1px; }
+
+/* approve screen: document rows hold a View button */
+.fileup-app div.cf-doc { cursor: default; }
+.fileup-app div.cf-doc:hover { transform: none; box-shadow: none; }
+.fileup-app button.cf-review { background: var(--surface); font-family: inherit; cursor: pointer; }
+.fileup-app button.cf-review:hover { border-color: var(--accent); }
+.fileup-app button.cf-review:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* approve screen: fee card */
+.fileup-app .cf-fee { align-items: center; border: 1px solid var(--line); }
+.fileup-app .cf-fee__main { display: flex; flex-direction: column; gap: 2px; }
+.fileup-app .cf-fee__line { grid-column: auto; margin: 0; font-size: 12px; }
+.fileup-app .cf-fee__amt { grid-column: 2; margin: 0; font-size: 20px; }
+.fileup-app .cf-fee__coupon { grid-column: 1 / -1; margin-top: 10px; }
+.fileup-app .cf-link {
+  display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none;
+  font: inherit; font-size: 13px; color: var(--accent); cursor: pointer;
+}
+.fileup-app .cf-link:hover { text-decoration: underline; }
+.fileup-app .cf-coupon { display: flex; gap: 8px; }
+.fileup-app .cf-coupon .input { flex: 1; height: 32px; }
+.fileup-app .cf-coupon__on { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--done-ink); }
+.fileup-app .cf-coupon__on .cf-link { margin-left: 4px; }
+
+/* approve screen: consent, ask box, what happens next */
+.fileup-app .cf-consent {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 12px; font-size: 13px; line-height: 1.5; cursor: pointer;
+}
+.fileup-app .cf-consent input { flex-shrink: 0; width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--accent); }
+.fileup-app .cf-consent strong { font-weight: 500; }
+.fileup-app .cf-consent + .field-error { margin: 4px 0 6px; }
+.fileup-app .cf-askbox { padding-top: 4px; }
+.fileup-app .cf-next { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.fileup-app .cf-next__title { margin-bottom: 8px; font-size: 13px; font-weight: 500; }
+.fileup-app .cf-next ol { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.fileup-app .cf-next li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.fileup-app .cf-next__n {
+  display: grid; place-items: center; flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--row); color: var(--muted); font-size: 11px;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .fileup-app .upring { animation-duration: 2.4s; }
+  .fileup-app .frow--busy::after { animation: none; width: 100%; opacity: 0.35; }
   .fileup-app .cf-doc { transition: none; }
   .fileup-app .cf-doc:hover,
   .fileup-app .cf-doc:focus-visible,

@@ -9,6 +9,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AMOUNTS, CONFIG, feeDue, money } from "./shared";
 import { useFileUp } from "./store";
 import { Crumbs, PageTitle, Ti } from "./ui";
+import { ACCEPT, screenFiles } from "./DocUploader";
 
 function CopyRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -44,7 +45,9 @@ export default function Payment() {
   const [code, setCode] = useState(s.payment.coupon || "");
   const [couponError, setCouponError] = useState("");
   const [shotError, setShotError] = useState("");
+  const [shotName, setShotName] = useState("");
   const dzRef = useRef<HTMLDivElement>(null);
+  const picker = useRef<HTMLInputElement>(null);
 
   if (s.stage !== 5) return <Navigate to="/dashboard" replace />;
 
@@ -80,7 +83,6 @@ export default function Payment() {
         items={[
           { text: "Dashboard", to: "/dashboard" },
           { text: "2025-26 return", to: "/dashboard/return" },
-          { text: "Confirm and file", to: "/dashboard/return/approval" },
           { text: "Payment" },
         ]}
       />
@@ -156,60 +158,66 @@ export default function Payment() {
 
       {due > 0 && (
         <>
-          <div className="section-label">Payment screenshot</div>
           {s.payment.shot ? (
             <div className="frow">
               <Ti name="ti-photo" cls="i20 c-accent" />
               <div className="frow__body">
-                <div className="frow__name">payment-screenshot.jpg</div>
-                <div className="frow__sub">Uploaded</div>
+                <div className="frow__name">Payment screenshot</div>
+                <div className="frow__sub">{shotName || "payment-screenshot.jpg"}</div>
               </div>
               <span className="frow__status frow__status--done">
                 <Ti name="ti-circle-check" cls="i16" />
-                Ready
+                Uploaded
               </span>
-              <button className="frow__x" type="button" aria-label="Remove screenshot" onClick={store.shotRemove}>
+              <button
+                className="frow__x"
+                type="button"
+                aria-label="Remove screenshot"
+                onClick={() => {
+                  store.shotRemove();
+                  setShotName("");
+                }}
+              >
                 <Ti name="ti-x" cls="i16" />
               </button>
             </div>
           ) : (
-            <div
-              className="dz"
-              ref={dzRef}
-              role="button"
-              tabIndex={0}
-              onClick={() => {
-                setShotError("");
-                store.shotAdd();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setShotError("");
-                  store.shotAdd();
-                }
-              }}
-            >
-              <Ti name="ti-cloud-upload" cls="dz__icon" />
-              <div>
-                Drop a screenshot or <strong>browse</strong>
+            // One button opens the file picker straight away, like the document rows.
+            <div className="doc pay-shot" ref={dzRef}>
+              <span className="doc__icon">
+                <Ti name="ti-photo" cls="i20" />
+              </span>
+              <div className="doc__body">
+                <div className="doc__name">Payment screenshot</div>
+                <div className="doc__meta">From your bank app, after you pay</div>
               </div>
-              <div className="dz__hint">PDF, PNG, or JPG</div>
+              <button className="btn btn--sm btn--secondary" type="button" onClick={() => picker.current?.click()}>
+                Upload
+              </button>
+              <input
+                ref={picker}
+                type="file"
+                accept={ACCEPT}
+                hidden
+                onChange={(e) => {
+                  const { good, error } = screenFiles(e.target.files, false);
+                  e.target.value = ""; // allow picking the same file again
+                  setShotError(error);
+                  if (!good.length) return;
+                  setShotName(good[0].name);
+                  store.shotAdd();
+                }}
+              />
             </div>
           )}
           <p className="field-error" role="alert">
             {shotError}
           </p>
-
-          <div className="section-label">
-            Transaction ID <span className="optional">(optional)</span>
-          </div>
-          <input className="input" aria-label="Transaction ID" placeholder="From your bank app" />
         </>
       )}
 
       <div className="page-actions">
-        <button className="btn btn--secondary" type="button" onClick={() => navigate("/dashboard/return/approval")}>
+        <button className="btn btn--secondary" type="button" onClick={() => navigate("/dashboard/return")}>
           Back
         </button>
         <button className="btn btn--primary" type="button" onClick={onSubmit}>

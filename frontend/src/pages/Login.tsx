@@ -48,7 +48,14 @@ export default function Login() {
         return;
       }
 
-      // Backend reached but login failed (e.g. no database) — continue in demo mode.
+      // Wrong email/password: say so rather than dropping into demo mode,
+      // where uploads would silently go nowhere.
+      if (res.status < 500) {
+        setError(data.error === "invalid credentials" ? "Wrong email or password." : data.error || "Login failed.");
+        return;
+      }
+
+      // Backend reached but broken (e.g. no database) — continue in demo mode.
       continueAsDemo();
     } catch (err) {
       // Backend unreachable — continue in demo mode so the app stays explorable.

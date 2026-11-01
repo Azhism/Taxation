@@ -1,35 +1,55 @@
-/* The documents list: one row per document, required progress, and a
-   gated Continue button. */
+/* The documents list shown inside the Upload step. Each row has one action
+   button (Upload or Add) that opens the file picker straight away; the row
+   itself opens a dropdown listing the files added so far. Assets bought or
+   sold is a chat, so its Add button opens that page instead. One dropdown is
+   open at a time. */
 
-import { type ReactNode } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
-import { CONFIG, DOCS, bankReady, docStatus, payReady, requiredCount } from "./shared";
+import { DOCS, DocId, UploadSlot, docStatus, requiredCount } from "./shared";
 import { useFileUp } from "./store";
-import { Crumbs, Ti } from "./ui";
+import DocUploader, { ACCEPT, UploadRing, screenFiles } from "./DocUploader";
+import { WaHint } from "./whatsapp";
+import { Ti } from "./ui";
+
+const isSlot = (id: string): id is UploadSlot => id === "bank" || id === "pay" || id === "wh";
+const ACTION: Record<DocId, string> = { bank: "Upload", pay: "Upload", wh: "Add", asset: "Add" };
 
 export default function DocumentsList() {
   const navigate = useNavigate();
-  const { s, docsContinue } = useFileUp();
-
-  if (!s.started || s.stage > 2) return <Navigate to="/dashboard" replace />;
+  const { hash } = useLocation();
+  const store = useFileUp();
+  const { s } = store;
+  const pickers = useRef<Partial<Record<UploadSlot, HTMLInputElement | null>>>({});
+  const [pickError, setPickError] = useState<{ id: DocId; text: string } | null>(null);
+  // A link like /dashboard/return#bank arrives with that dropdown open.
+  const [open, setOpen] = useState<DocId | null>(() => {
+    const id = hash.slice(1);
+    return isSlot(id) ? id : null;
+  });
+  // ...also when the link is followed while already on this page.
+  useEffect(() => {
+    const id = hash.slice(1);
+    if (isSlot(id)) setOpen(id);
+  }, [hash]);
 
   const n = requiredCount(s);
-  const todo = !bankReady(s) ? "bank" : !payReady(s) ? "pay" : null;
-  const open = requiredCount(s) === 2 || CONFIG.DEMO_UNLOCK_CONTINUE;
+  const assetsPath = "/dashboard/return/documents/" + DOCS[3].slug;
+
+  // Files picked from a row's Upload/Add button: upload them and open the
+  // dropdown so the user sees them uploading.
+  function onPicked(id: UploadSlot, list: FileList | null) {
+    const { good, error } = screenFiles(list, id !== "pay");
+    setPickError(error ? { id, text: error } : null);
+    if (good.length) store.uploadFiles(id, good);
+    if (good.length || error) setOpen(id);
+  }
 
   return (
-    <div className="view">
-      <Crumbs
-        items={[
-          { text: "Dashboard", to: "/dashboard" },
-          { text: "2025-26 return", to: "/dashboard/return" },
-          { text: "Documents" },
-        ]}
-      />
-
+    <>
       <div className="docs-head">
-        <h1 className="page-title">Your documents</h1>
+        <h3 className="docs-head__title">Your documents</h3>
         <span className="docs-count">{n} of 2 required</span>
       </div>
 
@@ -39,91 +59,87 @@ export default function DocumentsList() {
 
       <div className="doclist">
         {DOCS.map((d) => {
-          const status = docStatus(s, d.id);
-          let right: ReactNode;
-          if (status.kind === "empty") {
-            right = (
-              <button
-                className={"btn btn--sm " + (d.id === todo ? "btn--primary" : "btn--secondary")}
-                type="button"
-                tabIndex={-1}
-              >
-                {status.text}
-              </button>
-            );
-          } else if (status.kind === "busy") {
-            right = (
-              <span className="doc__status">
-                <Ti name="ti-loader-2" cls="spin i18 c-accent" />
-                {status.text}
-              </span>
-            );
-          } else if (status.kind === "partial") {
-            right = (
-              <>
-                <span className="doc__status doc__status--warn">{status.text}</span>
-                <Ti name="ti-chevron-right" cls="i18 c-subtle" />
-              </>
-            );
-          } else {
-            right = (
-              <>
-                <span className="doc__status doc__status--done">
-                  <Ti name="ti-circle-check" cls="i18" />
-                  {status.text}
-                </span>
-                <Ti name="ti-chevron-right" cls="i18 c-subtle" />
-              </>
-            );
-          }
-
-          const goDoc = () => navigate("/dashboard/return/documents/" + d.slug);
+          const id = d.id;
+          const slot = isSlot(id) ? id : null;
+          const isOpen = open === id;
+          const status = docStatus(s, id);
+          const done = status.kind === "done";
+          const toggle = () => (slot ? setOpen(isOpen ? null : slot) : navigate(assetsPath));
           return (
-            <div
-              key={d.id}
-              className="doc doc--link"
-              role="button"
-              tabIndex={0}
-              onClick={goDoc}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  goDoc();
-                }
-              }}
-            >
-              <span className="doc__icon">
-                <Ti name={d.icon} cls="i20" />
-              </span>
-              <div className="doc__body">
-                <div className="doc__name">{d.title}</div>
-                <div className="doc__meta">{d.required ? "Required" : "Optional"}</div>
+            <div key={id} className={"dacc" + (isOpen ? " is-open" : "")}>
+              <div className="dacc__head">
+                <button
+                  className="dacc__toggle"
+                  type="button"
+                  aria-expanded={slot ? isOpen : undefined}
+                  aria-controls={slot ? "dacc-" + id : undefined}
+                  onClick={toggle}
+                >
+                  {/* Done adds a small green tick badge to the document's own
+                      icon; solid teal is kept for the Submit button only. */}
+                  <span className={"doc__icon" + (done ? " doc__icon--ok" : "")}>
+                    <Ti name={d.icon} cls="i20" />
+                    {done && (
+                      <span className="doc__badge" aria-label="Uploaded">
+                        <Ti name="ti-check" />
+                      </span>
+                    )}
+                  </span>
+                  <span className="doc__body">
+                    <span className="doc__name">{d.title}</span>
+                    <span className="doc__meta">{d.required ? "Required" : "Optional"}</span>
+                  </span>
+                </button>
+
+                {status.kind === "busy" && <UploadRing />}
+                {status.kind === "partial" && <span className="doc__status doc__status--warn">Needs attention</span>}
+
+                <button
+                  className="btn btn--sm btn--secondary"
+                  type="button"
+                  onClick={() => (slot ? pickers.current[slot]?.click() : navigate(assetsPath))}
+                >
+                  {ACTION[id]}
+                </button>
+                {slot && (
+                  <input
+                    ref={(el) => {
+                      pickers.current[slot] = el;
+                    }}
+                    type="file"
+                    accept={ACCEPT}
+                    multiple={slot !== "pay"}
+                    hidden
+                    onChange={(e) => {
+                      onPicked(slot, e.target.files);
+                      e.target.value = ""; // allow picking the same file again
+                    }}
+                  />
+                )}
+
+                <button
+                  className="dacc__chevbtn"
+                  type="button"
+                  aria-label={slot ? (isOpen ? "Hide files" : "Show files") : "Open " + d.title}
+                  onClick={toggle}
+                >
+                  <Ti name={slot ? "ti-chevron-down" : "ti-chevron-right"} cls="i18 c-subtle dacc__chev" />
+                </button>
               </div>
-              {right}
+
+              {pickError?.id === id && <p className="field-error dacc__error">{pickError.text}</p>}
+
+              {slot && isOpen && (
+                <div className="dacc__body" id={"dacc-" + id}>
+                  <DocUploader slot={slot} onClose={() => setOpen(null)} />
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      <div className="page-actions page-actions--end">
-        <div className="page-actions__stack">
-          <button
-            className={"btn " + (open ? "btn--primary" : "btn--secondary")}
-            type="button"
-            onClick={() => {
-              if (docsContinue()) navigate("/dashboard/return");
-            }}
-          >
-            Continue
-            <Ti name="ti-arrow-right" cls="i18" />
-          </button>
-          {CONFIG.DEMO_UNLOCK_CONTINUE && requiredCount(s) < 2 && (
-            <span className="hint">
-              Preview mode: Continue is unlocked. In the live app it waits for bank statements and payslip.
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
+      <WaHint text="Send your documents on WhatsApp directly." />
+    </>
   );
 }

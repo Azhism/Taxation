@@ -7,6 +7,7 @@ import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
 import { query } from "./db";
+import { extractText, NeedsPasswordError } from "./extraction";
 
 dotenv.config();
 
@@ -148,10 +149,11 @@ app.post("/api/docs/upload", authMiddleware, upload.single("file"), async (req: 
     const userId = req.user.id; // From JWT payload
     
     // Save document metadata to database
-    await query(
-      `INSERT INTO documents 
-       (user_id, filename, original_name, file_url, file_type, file_size) 
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+    const inserted = await query(
+      `INSERT INTO documents
+       (user_id, filename, original_name, file_url, file_type, file_size)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id`,
       [
         userId,
         req.file.filename,
@@ -162,10 +164,100 @@ app.post("/api/docs/upload", authMiddleware, upload.single("file"), async (req: 
       ]
     );
     
-    res.json({ ok: true, filename: req.file.filename, url });
+    const docId = inserted.rows[0].id;
+    // Extract in the background; the client polls GET /api/docs/:id/extraction.
+    runExtraction(docId).catch(() => {});
+
+    res.json({ ok: true, id: docId, filename: req.file.filename, url });
   } catch (error) {
     console.error("Upload error:", error);
     return res.status(500).json({ error: "failed to save document" });
+  }
+});
+
+// --- Text extraction ---
+// Runs extraction for one document and records the outcome on its row.
+// Never logs the extracted text: it holds CNICs, account numbers and salaries.
+async function runExtraction(docId: number, password?: string) {
+  const doc = await query("SELECT filename, file_type FROM documents WHERE id = $1", [docId]);
+  if (doc.rows.length === 0) return;
+  const { filename, file_type } = doc.rows[0];
+
+  await query(
+    "UPDATE documents SET extraction_status = 'processing', extraction_error = NULL WHERE id = $1",
+    [docId]
+  );
+  try {
+    const result = await extractText(path.join(UPLOAD_DIR, filename), file_type, password);
+    await query(
+      `UPDATE documents
+       SET extraction_status = 'done', extraction_method = $2, extracted_text = $3,
+           extraction_confidence = $4, extraction_pages = $5, extracted_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [docId, result.method, result.text, result.confidence, result.pages]
+    );
+  } catch (error: any) {
+    const needsPassword = error instanceof NeedsPasswordError;
+    if (!needsPassword) console.error(`Extraction failed for document ${docId}:`, error?.message);
+    await query(
+      "UPDATE documents SET extraction_status = $2, extraction_error = $3 WHERE id = $1",
+      [docId, needsPassword ? "needs_password" : "failed", String(error?.message || error)]
+    );
+  }
+}
+
+// Owner-only lookup shared by the extraction routes; returns the id or sends an error.
+async function ownedDocId(req: any, res: any): Promise<number | null> {
+  const docId = parseInt(req.params.id, 10);
+  if (Number.isNaN(docId)) {
+    res.status(400).json({ error: "bad id" });
+    return null;
+  }
+  const result = await query("SELECT id FROM documents WHERE id = $1 AND user_id = $2", [
+    docId,
+    req.user.id,
+  ]);
+  if (result.rows.length === 0) {
+    res.status(404).json({ error: "not found" });
+    return null;
+  }
+  return docId;
+}
+
+async function extractionRow(docId: number) {
+  const result = await query(
+    `SELECT id, extraction_status AS status, extraction_method AS method, extracted_text AS text,
+            extraction_confidence AS confidence, extraction_pages AS pages,
+            extraction_error AS error, extracted_at
+     FROM documents WHERE id = $1`,
+    [docId]
+  );
+  return result.rows[0];
+}
+
+// Current extraction state and text for a document
+app.get("/api/docs/:id/extraction", authMiddleware, async (req: any, res) => {
+  try {
+    const docId = await ownedDocId(req, res);
+    if (docId === null) return;
+    res.json({ extraction: await extractionRow(docId) });
+  } catch (error) {
+    console.error("Get extraction error:", error);
+    return res.status(500).json({ error: "failed to fetch extraction" });
+  }
+});
+
+// Re-run extraction, optionally with a PDF password. Waits for the result.
+app.post("/api/docs/:id/extract", authMiddleware, async (req: any, res) => {
+  try {
+    const docId = await ownedDocId(req, res);
+    if (docId === null) return;
+    const password = typeof req.body?.password === "string" ? req.body.password : undefined;
+    await runExtraction(docId, password);
+    res.json({ extraction: await extractionRow(docId) });
+  } catch (error) {
+    console.error("Extract error:", error);
+    return res.status(500).json({ error: "failed to extract" });
   }
 });
 
@@ -212,6 +304,22 @@ app.get("/api/docs/:id/file", authMiddleware, async (req: any, res) => {
     console.error("File download error:", error);
     return res.status(500).json({ error: "failed to fetch file" });
   }
+});
+
+// --- Team turnaround ---
+// When our team will have confirmed an estimate submitted at `from` (ms since
+// epoch; defaults to now). TEAM_SLA_HOURS sets the promise (default 24).
+const TEAM_SLA_HOURS = Number(process.env.TEAM_SLA_HOURS) || 24;
+
+app.get("/api/team/eta", authMiddleware, (req: any, res) => {
+  const from = Number(req.query.from);
+  const start = Number.isFinite(from) && from > 0 ? from : Date.now();
+  const eta = new Date(start + TEAM_SLA_HOURS * 60 * 60 * 1000);
+  // Promise a whole hour ("tomorrow, 6 PM"), rounding up.
+  if (eta.getMinutes() || eta.getSeconds() || eta.getMilliseconds()) {
+    eta.setMinutes(60, 0, 0);
+  }
+  res.json({ eta: eta.toISOString(), slaHours: TEAM_SLA_HOURS });
 });
 
 // Health check

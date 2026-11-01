@@ -2,11 +2,11 @@
    FileUp app — shared config, types and constants.
    Ported from the reference app.js (mocked prototype data).
 
-   Five tracker steps: Upload > Review > Submit > Approve > File
+   Four tracker steps: Upload > Estimate > Approve > File
    Eight user-facing statuses (one per return, read from the backend):
-     0 upload      user adds documents
-     1 review      user checks what they uploaded
-     2 submit      user sends documents to FileUp
+     0 upload      user adds documents and submits them, on one screen
+     1 review      (legacy, shown as 0)
+     2 submit      (legacy, shown as 0)
      3 submitted   AI estimate (instant, not final) + our team confirms it
      4 approve     our team sent the final return: Confirm and file page
      5 payment     user approved, now pays the service fee
@@ -49,53 +49,50 @@ export const CONFIG = {
 };
 
 // Sample numbers. In production: estimate from the model, final from the team.
-export const AMOUNTS = { ESTIMATE: 126500, FINAL: 128300, FEE: 1000 };
+// ESTIMATE/FINAL are total tax for the year; the DEDUCTED figures are tax
+// already cut (salary, bank, phone) as the AI first read it and as the team
+// confirmed it. Remaining to pay = total - deducted.
+export const AMOUNTS = {
+  ESTIMATE: 126500,
+  ESTIMATE_DEDUCTED: 108000,
+  FINAL: 128300,
+  FINAL_DEDUCTED: 108500,
+  FEE: 1000,
+};
 // Prototype only. Validate coupons on the server (single-use, limits, expiry).
 export const COUPONS: Record<string, number> = { WELCOME: 200, FREE: 1000 };
 
 export const money = (n: number) => "PKR " + n.toLocaleString("en-US");
 
 // The team's note, shown to the user on approval. The admin can override it.
-export const DEFAULT_TEAM_NOTE =
-  "We claimed your mobile phone tax. Everything else matched your documents.";
+export const DEFAULT_TEAM_NOTE = "We found extra profit in your Meezan account.";
 
 // preview bar labels: index 0 = not started, then one per stage
 export const PREVIEW_LABELS = [
   "Not started", "Upload", "Review", "Submit", "Submitted", "Approve", "Payment", "Filing", "Filed",
 ];
-// short titles used on the Home status card ("Step n of 5: <title>")
+// short titles used on the Home status card ("Step n of 4: <title>").
+// Stages 0-2 are one screen now: upload, then submit, on the same page.
 export const STEP_TITLES = [
   "Upload your documents",
-  "Review your documents",
-  "Submit your documents",
+  "Upload your documents",
+  "Upload your documents",
   "Waiting for our team",
   "Approve your return",
   "Pay the service fee",
   "Filing in progress",
   "Filed",
 ];
-// the always-visible 5-step tracker
-export const TRACKER = ["Upload", "Review", "Submit", "Approve", "File"];
-// stage -> current tracker step (0..4)
-export const TRACKER_INDEX = [0, 1, 2, 2, 3, 3, 4, 5];
-// stage -> "Step n of 5"
-export const STEP_NUMBER = [1, 2, 3, 3, 4, 4, 5, 5];
+// the always-visible 4-step tracker
+export const TRACKER = ["Upload", "Estimate", "Approve", "File"];
+// stage -> current tracker step (0..3; 4 = all done)
+export const TRACKER_INDEX = [0, 0, 0, 1, 2, 2, 3, 4];
+// stage -> "Step n of 4"
+export const STEP_NUMBER = [1, 1, 1, 2, 3, 3, 4, 4];
+export const STEP_COUNT = TRACKER.length;
 
 export const BANKS = ["HBL", "Meezan Bank", "UBL", "Bank Alfalah"]; // sample names
 
-// The instant AI estimate: four visible steps, then the number.
-export const ESTIMATE_LINES = [
-  "Reading your documents",
-  "Sending the content to our AI",
-  "Applying the tax logic",
-  "Thinking it through",
-];
-export const ESTIMATE_DONE = [
-  "Documents extracted",
-  "Content sent to our AI",
-  "Tax logic applied",
-  "Estimate ready",
-];
 
 export type DocId = "bank" | "pay" | "wh" | "asset";
 
@@ -111,7 +108,29 @@ export const DOCS: DocMeta[] = [
 export const docBySlug = (slug: string) => DOCS.find((d) => d.slug === slug);
 export const docById = (id: DocId) => DOCS.find((d) => d.id === id)!;
 
-export type BankFile = { id: number; bank: string; name: string; done: boolean; wa?: boolean };
+// An uploaded document. Demo-mode files only use id/name/done; real uploads
+// also carry the backend document id and the extraction outcome.
+export type FileStatus = "scanning" | "done" | "needs_password" | "failed";
+export type UpFile = {
+  id: number;
+  name: string;
+  done: boolean;
+  wa?: boolean;
+  status?: FileStatus;
+  docId?: number;
+  method?: "pdf_text" | "ocr_image" | "ocr_pdf" | null;
+  confidence?: number | null;
+  error?: string | null;
+};
+export type BankFile = UpFile & { bank: string };
+export type UploadSlot = "bank" | "pay" | "wh";
+export const needsAttention = (f: UpFile) => f.status === "needs_password" || f.status === "failed";
+// Every uploaded file across the bank, payslip and withholding slots.
+export const slotFilesOf = (s: FileUpState): UpFile[] => [
+  ...s.bank.files,
+  ...(s.pay.file ? [s.pay.file] : []),
+  ...s.wh.files,
+];
 export type ChatMsg = { from: "them" | "me"; text: string };
 export type Payment = { coupon: string | null; discount: number; shot: boolean; rejected: boolean };
 export type Notice = { text: string; sub: string; tone: "ok" | "warn" } | null;
@@ -121,11 +140,11 @@ export type FileUpState = {
   started: boolean; // false until the user presses "Start filing"
   arrived: boolean; // show the "team sent your return" banner
   bankIdx: number;
-  bank: { files: BankFile[]; confirmed: boolean };
-  pay: { status: null | "scanning" | "done"; wa?: boolean };
+  bank: { files: BankFile[] };
+  pay: { status: null | "scanning" | "done" | "attention"; wa?: boolean; file?: UpFile };
   waBanner: string | null; // Home arrival banner: the document name, or null
   notice: Notice; // generic banner (payment confirmed / rejected)
-  wh: { files: string[]; none: boolean };
+  wh: { files: UpFile[]; none: boolean };
   asset: { chat: ChatMsg[]; none: boolean; sent: boolean };
   submittedAt: number;
   asking: boolean;
@@ -161,7 +180,7 @@ export const initialState: FileUpState = {
   started: false,
   arrived: false,
   bankIdx: 0,
-  bank: { files: [], confirmed: false },
+  bank: { files: [] },
   pay: { status: null },
   waBanner: null,
   notice: null,
@@ -203,7 +222,7 @@ export const teamNote = (s: FileUpState) => s.adminNote ?? DEFAULT_TEAM_NOTE;
 /* ---------- Derived document status helpers ---------- */
 
 export const bankReady = (s: FileUpState) =>
-  s.bank.files.length > 0 && s.bank.files.every((x) => x.done) && s.bank.confirmed;
+  s.bank.files.length > 0 && s.bank.files.every((x) => x.done);
 
 export const payReady = (s: FileUpState) => s.pay.status === "done";
 
@@ -215,11 +234,13 @@ export function docStatus(s: FileUpState, id: DocId): DocStatus {
   if (id === "bank") {
     const f = s.bank.files;
     if (!f.length) return { kind: "empty", text: "Upload" };
-    if (f.some((x) => !x.done)) return { kind: "busy", text: "Scanning..." };
-    return bankReady(s) ? { kind: "done", text: f.length + " added" } : { kind: "partial", text: "Confirm banks" };
+    if (f.some(needsAttention)) return { kind: "partial", text: "Needs attention" };
+    if (f.some((x) => !x.done)) return { kind: "busy", text: "Uploading..." };
+    return { kind: "done", text: f.length + " added" };
   }
   if (id === "pay") {
-    if (s.pay.status === "scanning") return { kind: "busy", text: "Scanning..." };
+    if (s.pay.status === "scanning") return { kind: "busy", text: "Uploading..." };
+    if (s.pay.status === "attention") return { kind: "partial", text: "Needs attention" };
     if (s.pay.status === "done") return { kind: "done", text: "Added" };
     return { kind: "empty", text: "Upload" };
   }
@@ -238,8 +259,8 @@ export type UploadedItem = { d: DocMeta; meta: string };
 export function uploadedSummary(s: FileUpState): UploadedItem[] {
   const out: UploadedItem[] = [];
   if (s.bank.files.length) out.push({ d: DOCS[0], meta: s.bank.files.map((f) => f.name).join(", ") });
-  if (s.pay.status) out.push({ d: DOCS[1], meta: "payslip.pdf" });
-  if (s.wh.files.length) out.push({ d: DOCS[2], meta: s.wh.files.join(", ") });
+  if (s.pay.status) out.push({ d: DOCS[1], meta: s.pay.file?.name || "payslip.pdf" });
+  if (s.wh.files.length) out.push({ d: DOCS[2], meta: s.wh.files.map((f) => f.name).join(", ") });
   if (s.asset.sent || s.asset.none)
     out.push({ d: DOCS[3], meta: s.asset.none ? "Nothing to report" : "Note from your chat" });
   return out;
